@@ -23,11 +23,11 @@ public class GlobalManager : MonoBehaviour {
     public UIManager UIManager => _uiManager;
 
     //Gameplay
-    public int playerIndex;
-    public int currentPlayerIndex;
+    private int _playerIndex;
+    private int _currentPlayerIndex;
 
-    public int playerValue => playerIndex == 0 ? -1 : 1;
-    public int currentPlayerValue => currentPlayerIndex == 0 ? -1 : 1;
+    public int playerValue => _playerIndex == 0 ? -1 : 1;
+    public int currentPlayerValue => _currentPlayerIndex == 0 ? -1 : 1;
     #endregion
 
     private void Awake() {
@@ -56,11 +56,15 @@ public class GlobalManager : MonoBehaviour {
         Utils.Loading(true);
 
         _playerIOManager.HandleMessage(_commonConst.serverMessageError, OnlineError);
-        _playerIOManager.HandleMessage(_commonConst.serverMessageJoin, (string[] infos) => { playerIndex = int.Parse(infos[0]); });
-        _playerIOManager.HandleMessage(_commonConst.serverMessageCurrentPlayer, (string[] infos) => { currentPlayerIndex = int.Parse(infos[0]); });
+        _playerIOManager.HandleMessage(_commonConst.serverMessageJoin, (string[] infos) => { _playerIndex = int.Parse(infos[0]); });
         _playerIOManager.HandleMessage(_commonConst.serverMessageGameInit, InitGame);
+        _playerIOManager.HandleMessage(_commonConst.serverMessageNextTurn, NextTurn);
 
-        _playerIOManager.Init("Alexis", null);
+        _playerIOManager.HandleMessage(_commonConst.serverMessageAddPiece, _boardController.AddPiece);
+        _playerIOManager.HandleMessage(_commonConst.serverMessageAlignedPieces, _boardController.AlignedPieces);
+        _playerIOManager.HandleMessage(_commonConst.serverMessageSelectPieces, _boardController.SelectPieces);
+
+        _playerIOManager.Init("countries-leygqey2lewhmpwnsn93gw", "Alexis", null);
     }
 
     private void OnlineError(string[] infos) {
@@ -78,5 +82,12 @@ public class GlobalManager : MonoBehaviour {
         _uiManager.Init();
 
         Utils.Loading(false);
+    }
+
+    private void NextTurn(string[] infos) {
+        _currentPlayerIndex = int.Parse(infos[0]);
+
+        if (_currentPlayerIndex == _playerIndex)
+            _boardController.NextTurn();
     }
 }

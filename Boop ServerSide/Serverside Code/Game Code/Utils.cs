@@ -6,7 +6,7 @@ public static class Utils {
     }
 
     public static void Log(object source, string methodName, string message = "") {
-        Log(source.GetType(), methodName, message);
+        Log(source.GetType().ToString(), methodName, message);
     }
 
     public static void LogError(string source, string methodName, string message = "") {
@@ -14,6 +14,6 @@ public static class Utils {
     }
 
     public static void LogError(object source, string methodName, string message = "") {
-        LogError(source.GetType(), methodName, message);
+        LogError(source.GetType().ToString(), methodName, message);
     }
 }

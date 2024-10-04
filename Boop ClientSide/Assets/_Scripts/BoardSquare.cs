@@ -26,6 +26,7 @@ public class BoardSquare : MonoBehaviour {
 
     public void SetBaseColor(Color color) {
         _color = color;
+        SetColor(color);
     }
 
     public async void SetColor(Color color, float duration = 0) {

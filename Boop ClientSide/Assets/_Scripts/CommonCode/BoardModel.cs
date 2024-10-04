@@ -4,7 +4,6 @@ using System.Linq;
 
 public class BoardModel {
     #region Variables
-    public Action<BoopVector> onCheck;
     public Action<BoopVector, BoopVector> onBoop;
     public Action<List<BoopVector>, int> onWin;
     public Action<PlayerModel[]> onPlayerModelsUpdate;
@@ -30,6 +29,9 @@ public class BoardModel {
         _gameState = GameState.Gameplay;
     }
 
+    public int AddPieceOnBoard(BoopVector v, int pieceValue) {
+        return AddPieceOnBoard(v, Math.Abs(pieceValue) == 2, pieceValue < 0 ? -1 : 1);
+    }
 
     public int AddPieceOnBoard(BoopVector v, bool large, int playerValue) {
         if (_board[v.x, v.y] != 0) {
@@ -100,14 +102,13 @@ public class BoardModel {
         return directions.ToArray();
     }
 
-    public void Check(BoopVector v, out List<BoopVector> aligned) {
-        aligned = new List<BoopVector>();
+    public void Simulate(BoopVector v, out List<BoopVector>[] alignedPerPlayer) {
+        List<BoopVector> aligned = new List<BoopVector>();
         BoopVector[] directions = GetPossibleDirections(v);
         List<BoopVector> modified = new List<BoopVector>() { v };
 
         foreach (BoopVector direction in directions) {
             BoopVector adjacentPos = v + direction;
-            onCheck?.Invoke(adjacentPos);
 
             int adjacentValue = _board[adjacentPos.x, adjacentPos.y];
 
@@ -116,7 +117,12 @@ public class BoardModel {
         }
 
         CheckForAlignment(modified, ref aligned);
-        aligned = aligned.Distinct().ToList();
+        aligned = aligned.Distinct(new VectorComparer()).ToList();
+
+        alignedPerPlayer = new List<BoopVector>[] {
+            aligned.FindAll(x => _board[x.x, x.y] < 0),
+            aligned.FindAll(x => _board[x.x, x.y] > 0)
+        };
     }
 
     private void Boop(BoopVector v, BoopVector direction, ref List<BoopVector> modified) {
@@ -198,7 +204,6 @@ public class BoardModel {
         List<BoopVector> validPos = new List<BoopVector>();
 
         foreach (BoopVector v in positions) {
-            onCheck?.Invoke(v);
             int newSign = Math.Sign(_board[v.x, v.y]);
 
             if (newSign == 0)
@@ -227,10 +232,10 @@ public class BoardModel {
         }
     }
 
-    public void EvaluateAlignment(BoopVector start, BoopVector end, out List<BoopVector> pos) {
+    public void EvaluateAlignment(BoopVector start, BoopVector end, out List<BoopVector> selectedSquares) {
         Utils.Log(this, "EvaluateAlignment", $"Evaluate from {start.ToString()} to {end.ToString()}");
 
-        pos = new List<BoopVector>();
+        selectedSquares = new List<BoopVector>();
         BoopVector direction = end - start;
         BoopVector absDir = new BoopVector(Math.Abs(direction.x), Math.Abs(direction.y));
 
@@ -246,19 +251,19 @@ public class BoardModel {
                 return;
 
         direction = new BoopVector(Math.Sign(direction.x), Math.Sign(direction.y));
-        pos.Add(start);
-        pos.Add(start + direction);
-        pos.Add(end);
+        selectedSquares.Add(start);
+        selectedSquares.Add(start + direction);
+        selectedSquares.Add(end);
 
         int sign = Math.Sign(_board[start.x, start.y]);
-        for (int i = 1; i < pos.Count; i++) {
+        for (int i = 1; i < selectedSquares.Count; i++) {
             if (Math.Sign(_board[start.x, start.y]) == sign)
                 continue;
 
             return;
         }
 
-        foreach (BoopVector v in pos)
+        foreach (BoopVector v in selectedSquares)
             RemovePieceFromBoard(v, !IsLargePiece(v));
     }
 

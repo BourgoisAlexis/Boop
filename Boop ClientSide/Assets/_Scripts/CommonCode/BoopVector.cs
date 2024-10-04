@@ -13,7 +13,8 @@ public class BoopVector {
     public static BoopVector operator +(BoopVector a, BoopVector b) => new BoopVector(a.x + b.x, a.y + b.y);
     public static BoopVector operator -(BoopVector a, BoopVector b) => new BoopVector(a.x - b.x, a.y - b.y);
 
-    public override string ToString() => $"{x}, {y}";
+    public override string ToString() => $"{x},{y}";
+    public static BoopVector FromString(string s) => new BoopVector(int.Parse(s.Split(',')[0]), int.Parse(s.Split(',')[1]));
 
     public override bool Equals(object obj) {
         BoopVector objAsVector = obj as BoopVector;

@@ -18,12 +18,10 @@ public class BoardController : MonoBehaviour {
 
 
     public void Init() {
-        _model.onCheck += Check;
         _model.onBoop += Boop;
         _model.onWin += Win;
 
         _squares = new BoardSquareModel[_model.Size, _model.Size];
-        NextTurn();
 
         Vector3 start = new Vector3(-_model.Size / 2, 0, -_model.Size / 2) + new Vector3(0.5f, 0, 0.5f);
 
@@ -40,23 +38,25 @@ public class BoardController : MonoBehaviour {
         }
     }
 
+
+    //Actions
     public void Click(BoopVector v, bool rightClick) {
         _squares[v.x, v.y].square.Click();
 
         switch (_state) {
-            case BoardState.Playing:
-                AddPiece(v, rightClick);
+            case BoardState.Placing:
+                Place(v, rightClick);
                 break;
 
             case BoardState.Selecting:
                 if (rightClick)
                     break;
-                SelectSquare(v);
+                Select(v);
                 break;
         }
     }
 
-    private void AddPiece(BoopVector v, bool large) {
+    private void Place(BoopVector v, bool large) {
         int pieceValue = _model.AddPieceOnBoard(v, large, GlobalManager.Instance.currentPlayerValue);
 
         if (pieceValue == 0)
@@ -64,34 +64,16 @@ public class BoardController : MonoBehaviour {
 
         GlobalManager.Instance.PlayerIOManager.SendMessage(
             GlobalManager.Instance.CommonConst.userMessageAddPiece,
-            v.x,
-            v.y,
+            v.ToString(),
             pieceValue
         );
-        BoardSquareModel square = _squares[v.x, v.y];
 
-        GameObject instantiated = Instantiate(_prefabPiece, square.square.transform);
-        instantiated.transform.localPosition = Vector3.zero;
-        BoardPiece piece = instantiated.GetComponent<BoardPiece>();
-        piece.Init(pieceValue);
+        AddPiece(v, pieceValue);
 
-        square.piece = piece;
-
-        _model.Check(v, out List<BoopVector> aligned);
-
-        if (aligned != null && aligned.Count > 1) {
-            _state = BoardState.Selecting;
-            _alignedSquares = aligned;
-
-            foreach (BoopVector pos in aligned)
-                _squares[pos.x, pos.y].square.SetBaseColor(Color.yellow);
-        }
-        else {
-            NextTurn();
-        }
+        _state = BoardState.Waiting;
     }
 
-    private void SelectSquare(BoopVector v) {
+    private void Select(BoopVector v) {
         if (!_alignedSquares.Contains(v))
             return;
 
@@ -105,6 +87,19 @@ public class BoardController : MonoBehaviour {
 
         _model.EvaluateAlignment(_selectedSquare, v, out List<BoopVector> selectedSquares);
 
+        if (selectedSquares != null && selectedSquares.Count == 3) {
+            string[] pos = new string[] {
+                selectedSquares[0].ToString(),
+                selectedSquares[1].ToString(),
+                selectedSquares[2].ToString()
+            };
+
+            GlobalManager.Instance.PlayerIOManager.SendMessage(
+                GlobalManager.Instance.CommonConst.userMessageSelectPieces,
+                pos
+            );
+        }
+
         foreach (BoopVector pos in selectedSquares) {
             BoardSquareModel sm = _squares[pos.x, pos.y];
             sm.square.SetBaseColor(Color.white);
@@ -112,8 +107,9 @@ public class BoardController : MonoBehaviour {
             RemovePiece(pos);
         }
 
-        NextTurn();
+        _state = BoardState.Waiting;
     }
+
 
     public void RemovePiece(BoopVector v) {
         BoardSquareModel square = _squares[v.x, v.y];
@@ -124,10 +120,11 @@ public class BoardController : MonoBehaviour {
         square.piece.Delete(() => { square.piece = null; });
     }
 
-    public void NextTurn() {
-        _state = BoardState.Playing;
-        _selectedSquare = null;
-        _alignedSquares.Clear();
+    private void Win(List<BoopVector> aligned, int playerIndex) {
+        Utils.Log(this, "Win", $"Player {playerIndex} won");
+
+        //foreach (BoopVector pos in aligned)
+        //    _squares[pos.x, pos.y].square.SetBaseColor(Color.yellow);
     }
 
     private void Boop(BoopVector origin, BoopVector destination) {
@@ -152,14 +149,55 @@ public class BoardController : MonoBehaviour {
         }
     }
 
-    private void Check(BoopVector v) {
-        _squares[v.x, v.y].square.FlashColor(Color.cyan);
+    private void AddPiece(BoopVector v, int pieceValue) {
+        BoardSquareModel square = _squares[v.x, v.y];
+
+        GameObject instantiated = Instantiate(_prefabPiece, square.square.transform);
+        instantiated.transform.localPosition = Vector3.zero;
+        BoardPiece piece = instantiated.GetComponent<BoardPiece>();
+        piece.Init(pieceValue);
+
+        square.piece = piece;
+
+        _model.Simulate(v, out List<BoopVector>[] alignedPerPlayer);
     }
 
-    private void Win(List<BoopVector> aligned, int playerIndex) {
-        Utils.Log(this, "Win", $"Player {playerIndex} won");
 
-        //foreach (BoopVector pos in aligned)
-        //    _squares[pos.x, pos.y].square.SetBaseColor(Color.yellow);
+    //From server notice
+    public void AlignedPieces(string[] infos) {
+        _state = BoardState.Selecting;
+
+        List<BoopVector> pos = new List<BoopVector>();
+        foreach (string info in infos)
+            pos.Add(BoopVector.FromString(info));
+
+        _alignedSquares = pos;
+
+        foreach (BoopVector p in pos)
+            _squares[p.x, p.y].square.SetBaseColor(Color.yellow);
+    }
+
+    public void AddPiece(string[] infos) {
+        BoopVector v = BoopVector.FromString(infos[0]);
+        int pieceValue = int.Parse(infos[1]);
+        _model.AddPieceOnBoard(v, pieceValue);
+        AddPiece(v, pieceValue);
+    }
+
+    public void SelectPieces(string[] infos) {
+        _model.EvaluateAlignment(BoopVector.FromString(infos[0]), BoopVector.FromString(infos[2]), out List<BoopVector> selectedSquares);
+
+        foreach (BoopVector pos in selectedSquares) {
+            BoardSquareModel sm = _squares[pos.x, pos.y];
+            sm.square.SetBaseColor(Color.white);
+            sm.square.FlashColor(Color.green);
+            RemovePiece(pos);
+        }
+    }
+
+    public void NextTurn() {
+        _state = BoardState.Placing;
+        _selectedSquare = null;
+        _alignedSquares.Clear();
     }
 }
