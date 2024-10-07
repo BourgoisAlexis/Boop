@@ -4,6 +4,16 @@ using System.Linq;
 using PlayerIO.GameLibrary;
 
 namespace Boop {
+    public class MessageWaiting {
+        public string messageType;
+        public int messageNumber;
+
+        public MessageWaiting(string messageType, int messageNumber) {
+            this.messageType = messageType;
+            this.messageNumber = messageNumber;
+        }
+    }
+
     public class Player : BasePlayer {
     }
 
@@ -16,6 +26,7 @@ namespace Boop {
 
         //Gameplay
         public int _currentPlayerIndex;
+        public MessageWaiting _messageWaiting;
         public int _currentPlayerValue => _currentPlayerIndex == 0 ? -1 : 1;
         #endregion
 
@@ -54,6 +65,14 @@ namespace Boop {
                 case "usermessage_selectpieces":
                     SelectPieces(player, m);
                     break;
+            }
+
+            if (_messageWaiting != null && _messageWaiting.messageNumber > 0) {
+                if (m.Type == _messageWaiting.messageType) {
+                    _messageWaiting.messageNumber--;
+                    if (_messageWaiting.messageNumber == 0)
+                        NextTurn();
+                }
             }
         }
         #endregion
@@ -94,21 +113,34 @@ namespace Boop {
             int actualValue = _model.AddPieceOnBoard(v, large, _currentPlayerValue);
 
             if (actualValue != pieceValue) {
-                Utils.LogError(this, "GotMessage", "received value is different from value");
+                Utils.LogError(this, "AddPiece", "received value is different from value");
                 return;
             }
 
             SpreadMessage(_commonConst.serverMessageAddPiece, player, m);
 
             _model.Simulate(v, out List<BoopVector>[] alignedPerPlayer);
-            List<BoopVector> aligned = alignedPerPlayer[_currentPlayerIndex];
 
-            if (aligned != null && aligned.Count > 1) {
-                Utils.Log(this, "AddPiece", $"{aligned.Count}");
-                string[] infos = new string[aligned.Count];
-                for (int i = 0; i < aligned.Count; i++)
-                    infos[i] = aligned[i].ToString();
-                player.Send(_commonConst.serverMessageAlignedPieces, infos);
+            if (alignedPerPlayer != null && alignedPerPlayer.Length > 0) {
+                if (alignedPerPlayer[0].Count == 0 && alignedPerPlayer[1].Count == 0) {
+                    NextTurn();
+                    return;
+                }
+
+                _messageWaiting = new MessageWaiting(_commonConst.userMessageSelectPieces, 0);
+
+                for (int i = 0; i < alignedPerPlayer.Length; i++) {
+                    List<BoopVector> aligned = alignedPerPlayer[i];
+
+                    if (aligned != null && aligned.Count > 1) {
+                        string[] infos = new string[aligned.Count];
+                        for (int j = 0; j < aligned.Count; j++)
+                            infos[j] = aligned[j].ToString();
+
+                        GetPlayerFromID((i + 1).ToString()).Send(_commonConst.serverMessageAlignedPieces, infos);
+                        _messageWaiting.messageNumber++;
+                    }
+                }
             }
             else {
                 NextTurn();
@@ -128,7 +160,7 @@ namespace Boop {
             if (_currentPlayerIndex > Players.Count() - 1)
                 _currentPlayerIndex = 0;
 
-            Broadcast(_commonConst.serverMessageNextTurn, _currentPlayerIndex.ToString());
+            Broadcast(_commonConst.serverMessageNextTurn, _currentPlayerIndex.ToString(), CommonUtils.BoardState(_model.Board));
         }
         #endregion
     }

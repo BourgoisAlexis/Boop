@@ -8,8 +8,8 @@ public class CommonConst {
     public string serverMessageGameInit = "servermessage_gameinit";
     public string serverMessageAddPiece = "servermessage_addpiece";
     public string serverMessageAlignedPieces = "servermessage_alignedpieces";
-    public string serverMessageNextTurn = "servermessage_nextturn";
     public string serverMessageSelectPieces = "servermessage_selectpieces";
+    public string serverMessageNextTurn = "servermessage_nextturn";
 
     //User Messages
     public string userMessageAddPiece = "usermessage_addpiece";

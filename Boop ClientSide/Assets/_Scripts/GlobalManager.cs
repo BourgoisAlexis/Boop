@@ -86,6 +86,11 @@ public class GlobalManager : MonoBehaviour {
 
     private void NextTurn(string[] infos) {
         _currentPlayerIndex = int.Parse(infos[0]);
+        string serverBoard = infos[1];
+        string localBoard = CommonUtils.BoardState(_boardModel.Board);
+
+        if (serverBoard != localBoard)
+            Utils.LogError(this, "NextTurn", "Need synchronisation");
 
         if (_currentPlayerIndex == _playerIndex)
             _boardController.NextTurn();

@@ -20,4 +20,29 @@ public static class CommonUtils {
 
         Utils.Log("CommonUtils", "LogMessage", b.ToString());
     }
+
+    public static string BoardState(int[,] board) {
+        StringBuilder sb = new StringBuilder();
+        int boardSize = board.GetLength(0);
+
+        for (int x = 0; x < boardSize; x++)
+            for (int y = 0; y < boardSize; y++) {
+                sb.Append(board[x, y]);
+                if (x < boardSize - 1 || y < boardSize - 1)
+                    sb.Append(";");
+            }
+
+        return sb.ToString();
+    }
+
+    public static int[,] BoardState(string board, int boardSize) {
+        string[] squares = board.Split(';');
+        int[,] result = new int[boardSize, boardSize];
+
+        for (int x = 0; x < boardSize; x++)
+            for (int y = 0; y < boardSize; y++)
+                result[x, y] = int.Parse(squares[(x * boardSize) + y]);
+
+        return result;
+    }
 }

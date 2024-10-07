@@ -15,12 +15,16 @@ def replace(path: str, from_client: bool):
 
 
 # EXECUTION
-base_path: str = "Z:\PROJETS PERSOS\Boop"
+base_path: str = os.path.dirname(__file__)
 client_specific_path: str = "Boop ClientSide\Assets\_Scripts\CommonCode"
 server_specific_path: str = "Boop ServerSide\Serverside Code\Game Code\CommonCode"
 
 print("USE server OR client TO DEFINE THE SOURCE")
 v: str = input()
+
+while v != "server" and v != "client":
+    print("USE server OR client TO DEFINE THE SOURCE")
+    v = input()
 
 from_client: bool = v == "client"
 

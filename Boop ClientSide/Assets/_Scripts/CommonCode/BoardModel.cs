@@ -16,7 +16,7 @@ public class BoardModel {
     private GameState _gameState;
 
     public int Size => _boardSize;
-    public int GetValue(int x, int y) => _board[x, y];
+    public int[,] Board => _board;
     #endregion
 
 
