@@ -27,8 +27,8 @@ public class PlayerIOManager {
             null,                                   //PlayerInsight segments
             (Client client) => {
                 _client = client;
-                AuthenticateSuccess();
                 onSuccess?.Invoke();
+                AuthenticateSuccess();
             },
             (PlayerIOError error) => {
                 Utils.LogError(this, "Init", error.Message);
@@ -46,48 +46,17 @@ public class PlayerIOManager {
             Utils.Log(this, "AuthenticateSuccess", "Create serverEndpoint");
             _client.Multiplayer.DevelopmentServer = new ServerEndpoint("localhost", 8184);
         }
-
-        CreateJoinRoom();
     }
 
     //Room
-    public void CreateJoinRoom() {
-        Utils.Log(this, "CreateJoinRoom");
-
-        if (!CheckClient())
-            return;
-
-        _client.Multiplayer.ListRooms(
-            GlobalManager.Instance.CommonConst.defaultRoomID,
-            null,
-            30,
-            0,
-            (RoomInfo[] rooms) => {
-                if (rooms.Length == 0) {
-                    CreateRoom($"{GlobalManager.Instance.CommonConst.defaultRoomID}_{0}");
-                }
-                else {
-                    bool connected = false;
-                    foreach (RoomInfo room in rooms) {
-                        if (room.OnlineUsers < GlobalManager.Instance.CommonConst.userLimitPerRoom) {
-                            JoinRoom(room.Id);
-                            connected = true;
-                            break;
-                        }
-                    }
-                    if (!connected) {
-                        CreateRoom($"{GlobalManager.Instance.CommonConst.defaultRoomID}_{rooms.Length}");
-                    }
-                }
-            }
-        );
-    }
-
-    private void CreateRoom(string roomId) {
+    public void CreateRoom(Action<string> onSuccess) {
         Utils.Log(this, "CreateRoom");
 
         if (!CheckClient())
             return;
+
+        System.Random r = new System.Random();
+        string roomId = $"{GlobalManager.Instance.CommonConst.defaultRoomID}_{r.Next(1000)}";
 
         _client.Multiplayer.CreateRoom(
             roomId,
@@ -95,7 +64,8 @@ public class PlayerIOManager {
             true,
             null,
             (string roomId) => {
-                JoinRoom(roomId);
+                JoinRoom(roomId, null);
+                onSuccess?.Invoke(roomId);
             },
             (PlayerIOError error) => {
                 Utils.LogError(this, "CreateRoom", error.Message);
@@ -103,7 +73,7 @@ public class PlayerIOManager {
         );
     }
 
-    private void JoinRoom(string roomId) {
+    public void JoinRoom(string roomId, Action onSuccess) {
         Utils.Log(this, "JoinRoom");
 
         if (!CheckClient())
@@ -117,6 +87,7 @@ public class PlayerIOManager {
             (Connection connection) => {
                 _connection = connection;
                 _connection.OnMessage += ReceiveMessage;
+                onSuccess?.Invoke();
             },
             (PlayerIOError error) => {
                 Utils.LogError(this, "JoinRoom", error.Message);

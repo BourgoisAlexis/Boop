@@ -6,24 +6,30 @@ public class BoardPiece : MonoBehaviour {
     [SerializeField] private MeshRenderer[] _visuals;
 
     private Vector3 _baseScale;
+    private Vector3 _basePos;
     private Ease _ease = Ease.InExpo;
+    private Transform _activeVisual;
+
 
     public async void Init(int value) {
         foreach (MeshRenderer m in _visuals)
             m.gameObject.SetActive(false);
 
-        MeshRenderer visual = _visuals[Mathf.Abs(value) - 1];
+        int index = Mathf.Abs(value) - 1 + (value < 0 ? 0 : 2);
+        MeshRenderer visual = _visuals[index];
 
         visual.gameObject.SetActive(true);
         visual.material.color = value > 0 ? Color.blue : Color.red;
 
-        Transform t = visual.transform;
-        _baseScale = t.localScale;
+        _activeVisual = visual.transform;
+        _baseScale = _activeVisual.localScale;
+        _basePos = _activeVisual.localPosition;
+
         float amplitude = 1.5f;
-        t.localPosition = Vector3.up * (_baseScale.y + amplitude);
-        t.DOScale(_baseScale + Vector3.up * amplitude, AppConst.globalAnimDuration).SetEase(_ease);
-        await t.DOLocalMoveY(_baseScale.y, AppConst.globalAnimDuration).SetEase(_ease).AsyncWaitForCompletion();
-        t.DOScale(_baseScale, AppConst.globalAnimDuration);
+        _activeVisual.localPosition = Vector3.up * (_basePos.y + amplitude);
+        _activeVisual.DOScale(_baseScale + Vector3.up * amplitude, AppConst.globalAnimDuration).SetEase(_ease);
+        await _activeVisual.DOLocalMoveY(_basePos.y, AppConst.globalAnimDuration).SetEase(_ease).AsyncWaitForCompletion();
+        _activeVisual.DOScale(_baseScale, AppConst.globalAnimDuration);
     }
 
     public async void Delete(Action onEnd) {

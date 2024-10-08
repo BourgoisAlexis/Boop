@@ -1,12 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class UIManager : MonoBehaviour {
-    [SerializeField] private Loading _loading;
+public class UIViewBoard : MonoBehaviour {
     [SerializeField] private List<UIPieceCount> _counts = new List<UIPieceCount>();
 
-    public void Init() {
-        GlobalManager.Instance.BoardModel.onPlayerModelsUpdate += UpdateCounts;
+    public void Init(BoardModel model) {
+        model.onPlayerModelsUpdate += UpdateCounts;
 
         foreach (UIPieceCount count in _counts)
             count.Init();
@@ -20,9 +19,5 @@ public class UIManager : MonoBehaviour {
 
             index += 2;
         }
-    }
-
-    public void Load(bool loading) {
-        _loading.Load(loading);
     }
 }

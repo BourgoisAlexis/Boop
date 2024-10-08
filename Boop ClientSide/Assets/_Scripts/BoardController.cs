@@ -2,7 +2,7 @@ using DG.Tweening;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BoardController : MonoBehaviour {
+public class BoardController : SceneManager {
     #region Variables
     [SerializeField] private GameObject _prefabSquare;
     [SerializeField] private GameObject _prefabPiece;
@@ -12,15 +12,31 @@ public class BoardController : MonoBehaviour {
     private BoardState _state = BoardState.Default;
     private BoopVector _selectedSquare = null;
     private List<BoopVector> _alignedSquares = new List<BoopVector>();
+    private BoardModel _model;
 
-    private BoardModel _model => GlobalManager.Instance.BoardModel;
+    public BoardModel Model => _model;
     #endregion
 
 
-    public void Init() {
+    public override void Init(params object[] parameters) {
+        _model = new BoardModel();
+        _model.Init();
         _model.onBoop += Boop;
         _model.onWin += Win;
 
+        GetComponent<InputManager>().Init();
+        GetComponent<UIViewBoard>().Init(_model);
+
+        PlayerIOManager playerIO = GlobalManager.Instance.PlayerIOManager;
+        CommonConst commonConst = GlobalManager.Instance.CommonConst;
+        playerIO.HandleMessage(commonConst.serverMessageAddPiece, AddPiece);
+        playerIO.HandleMessage(commonConst.serverMessageAlignedPieces, AlignedPieces);
+        playerIO.HandleMessage(commonConst.serverMessageSelectPieces, SelectPieces);
+
+        BoardSpawn();
+    }
+
+    private void BoardSpawn() {
         _squares = new BoardSquareModel[_model.Size, _model.Size];
 
         Vector3 start = new Vector3(-_model.Size / 2, 0, -_model.Size / 2) + new Vector3(0.5f, 0, 0.5f);

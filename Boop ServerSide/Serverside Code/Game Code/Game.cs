@@ -45,7 +45,7 @@ namespace Boop {
         public override void UserJoined(Player player) {
             player.Send(_commonConst.serverMessageJoin, (player.Id - 1).ToString());
 
-            if (PlayerCount == 2)
+            //if (PlayerCount == 2)
                 GameInit();
         }
 

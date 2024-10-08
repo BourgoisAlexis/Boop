@@ -3,9 +3,11 @@ using UnityEngine;
 public class InputManager : MonoBehaviour {
     private Camera _camera;
     private BoardSquare _currentSquare;
+    private BoardController _boardController;
 
     public void Init() {
         _camera = Camera.main;
+        _boardController = GetComponent<BoardController>();
     }
 
     private void Update() {
@@ -38,8 +40,8 @@ public class InputManager : MonoBehaviour {
             return;
 
         if (Input.GetMouseButtonDown(0))
-            GlobalManager.Instance.BoardController.Click(_currentSquare.Pos, false);
+            _boardController.Click(_currentSquare.Pos, false);
         else if (Input.GetMouseButtonDown(1))
-            GlobalManager.Instance.BoardController.Click(_currentSquare.Pos, true);
+            _boardController.Click(_currentSquare.Pos, true);
     }
 }

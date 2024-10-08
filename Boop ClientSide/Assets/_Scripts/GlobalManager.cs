@@ -9,20 +9,22 @@ public class GlobalManager : MonoBehaviour {
     public bool useLocalPlayerIO;
 
     private CommonConst _commonConst;
-    private BoardModel _boardModel;
-    private InputManager _inputManager;
-    private BoardController _boardController;
     private PlayerIOManager _playerIOManager;
-    private UIManager _uiManager;
+    private NavigationManager _navigationManager;
+    private UITransitionManager _uiTransitionManager;
+    private SceneManager _sceneManager;
+    private Loading _loading;
 
+    //Accessors
     public CommonConst CommonConst => _commonConst;
-    public BoardModel BoardModel => _boardModel;
-    public InputManager InputManager => _inputManager;
-    public BoardController BoardController => _boardController;
     public PlayerIOManager PlayerIOManager => _playerIOManager;
-    public UIManager UIManager => _uiManager;
+    public NavigationManager NavigationManager => _navigationManager;
+    public UITransitionManager UITransitionManager => _uiTransitionManager;
+    public SceneManager SceneManager => _sceneManager;
+    public Loading Loading => _loading;
 
     //Gameplay
+    private BoardController _boardController => _sceneManager as BoardController;
     private int _playerIndex;
     private int _currentPlayerIndex;
 
@@ -35,37 +37,44 @@ public class GlobalManager : MonoBehaviour {
             Instance = this;
         else
             Destroy(this);
+
+        DontDestroyOnLoad(gameObject);
+        GetSceneManager();
     }
 
     private void Start() {
-        Init();
-    }
-
-    private void Init() {
         _commonConst = new CommonConst();
-        _boardModel = new BoardModel();
-        _inputManager = GetComponent<InputManager>();
-        _boardController = GetComponent<BoardController>();
         _playerIOManager = new PlayerIOManager();
-        _uiManager = FindObjectOfType<UIManager>();
+        _navigationManager = new NavigationManager();
 
+        _loading = GetComponent<Loading>();
+
+        _uiTransitionManager = FindObjectOfType<UITransitionManager>();
+
+        _navigationManager.onSceneLoaded += GetSceneManager;
         ConnectToPlayerIO();
+
+        _loading.Load(false);
     }
 
-    private void ConnectToPlayerIO() {
-        Utils.Loading(true);
+    private void GetSceneManager() {
+        _sceneManager = FindObjectOfType<SceneManager>();
+        _sceneManager?.Init();
+    }
+
+
+    public void ConnectToPlayerIO() {
+        _loading.Load(true);
+
+        _playerIOManager.Init("boop-icbnqap9eeykmbikigg6xw", "Alexis", null);
 
         _playerIOManager.HandleMessage(_commonConst.serverMessageError, OnlineError);
-        _playerIOManager.HandleMessage(_commonConst.serverMessageJoin, (string[] infos) => { _playerIndex = int.Parse(infos[0]); });
+        _playerIOManager.HandleMessage(_commonConst.serverMessageJoin, Join);
         _playerIOManager.HandleMessage(_commonConst.serverMessageGameInit, InitGame);
         _playerIOManager.HandleMessage(_commonConst.serverMessageNextTurn, NextTurn);
-
-        _playerIOManager.HandleMessage(_commonConst.serverMessageAddPiece, _boardController.AddPiece);
-        _playerIOManager.HandleMessage(_commonConst.serverMessageAlignedPieces, _boardController.AlignedPieces);
-        _playerIOManager.HandleMessage(_commonConst.serverMessageSelectPieces, _boardController.SelectPieces);
-
-        _playerIOManager.Init("countries-leygqey2lewhmpwnsn93gw", "Alexis", null);
+        _loading.Load(false);
     }
+
 
     private void OnlineError(string[] infos) {
         StringBuilder sb = new StringBuilder();
@@ -75,19 +84,18 @@ public class GlobalManager : MonoBehaviour {
         Utils.LogError(this, "OnlineError", sb.ToString());
     }
 
-    private void InitGame(string[] infos) {
-        _boardModel.Init();
-        _inputManager.Init();
-        _boardController.Init();
-        _uiManager.Init();
+    private void Join(string[] infos) {
+        _playerIndex = int.Parse(infos[0]);
+    }
 
-        Utils.Loading(false);
+    private void InitGame(string[] infos) {
+        _navigationManager.LoadScene(1);
     }
 
     private void NextTurn(string[] infos) {
         _currentPlayerIndex = int.Parse(infos[0]);
         string serverBoard = infos[1];
-        string localBoard = CommonUtils.BoardState(_boardModel.Board);
+        string localBoard = CommonUtils.BoardState(_boardController.Model.Board);
 
         if (serverBoard != localBoard)
             Utils.LogError(this, "NextTurn", "Need synchronisation");

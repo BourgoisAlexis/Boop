@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public static class Utils {
@@ -17,7 +18,21 @@ public static class Utils {
         LogError(source.GetType().ToString(), methodName, message);
     }
 
-    public static void Loading(bool loading) {
-        GlobalManager.Instance.UIManager.Load(loading);
+    /// <summary>
+    /// Add actions to loadScene and remove them on scene loaded
+    /// </summary>
+    /// <param name="actions"></param>
+    public static void AutoClearingActionOnLoad(params Action[] actions) {
+        NavigationManager nav = GlobalManager.Instance.NavigationManager;
+
+        foreach (Action action in actions)
+            nav.onLoadScene += action;
+
+        Action onLoaded = () => {
+            foreach (Action action in actions)
+                nav.onLoadScene -= action;
+        };
+
+        nav.onSceneLoaded += onLoaded;
     }
 }
