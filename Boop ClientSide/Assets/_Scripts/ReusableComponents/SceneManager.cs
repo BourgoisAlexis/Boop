@@ -10,4 +10,8 @@ public abstract class SceneManager : MonoBehaviour {
     public virtual void GoToView(int index) {
         _viewManager.ShowView(index);
     }
+
+    public virtual void Back() {
+        _viewManager.Back();
+    }
 }

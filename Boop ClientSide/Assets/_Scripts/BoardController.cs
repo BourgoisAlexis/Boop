@@ -115,12 +115,18 @@ public class BoardController : SceneManager {
                 pos
             );
         }
+        else {
+            _selectedSquare = null;
+            return;
+        }
 
-        foreach (BoopVector pos in selectedSquares) {
+        foreach (BoopVector pos in _alignedSquares) {
             BoardSquareModel sm = _squares[pos.x, pos.y];
             sm.square.SetBaseColor(Color.white);
-            sm.square.FlashColor(Color.green);
-            RemovePiece(pos);
+            if (selectedSquares.Contains(pos)) {
+                sm.square.FlashColor(Color.green);
+                RemovePiece(pos);
+            }
         }
 
         _state = BoardState.Waiting;

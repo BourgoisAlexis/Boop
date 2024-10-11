@@ -7,10 +7,12 @@ namespace Boop {
     public class MessageWaiting {
         public string messageType;
         public int messageNumber;
+        public Action onSuccess;
 
-        public MessageWaiting(string messageType, int messageNumber) {
+        public MessageWaiting(string messageType, int messageNumber, Action onSuccess) {
             this.messageType = messageType;
             this.messageNumber = messageNumber;
+            this.onSuccess = onSuccess;
         }
     }
 
@@ -45,8 +47,12 @@ namespace Boop {
         public override void UserJoined(Player player) {
             player.Send(_commonConst.serverMessageJoin, (player.Id - 1).ToString());
 
-            //if (PlayerCount == 2)
-                GameInit();
+            int playerN = 1;
+
+            if (PlayerCount == playerN) {
+                Broadcast(_commonConst.serverMessageLoadScene, 1.ToString());
+                _messageWaiting = new MessageWaiting(_commonConst.userMessageSceneLoaded, playerN, GameInit);
+            }
         }
 
         public override void UserLeft(Player player) {
@@ -71,7 +77,7 @@ namespace Boop {
                 if (m.Type == _messageWaiting.messageType) {
                     _messageWaiting.messageNumber--;
                     if (_messageWaiting.messageNumber == 0)
-                        NextTurn();
+                        _messageWaiting.onSuccess?.Invoke();
                 }
             }
         }
@@ -102,7 +108,6 @@ namespace Boop {
 
         private void GameInit() {
             _currentPlayerIndex = _random.NextDouble() > 0.5f ? 0 : 1;
-            Broadcast(_commonConst.serverMessageGameInit);
             NextTurn();
         }
 
@@ -127,7 +132,7 @@ namespace Boop {
                     return;
                 }
 
-                _messageWaiting = new MessageWaiting(_commonConst.userMessageSelectPieces, 0);
+                _messageWaiting = new MessageWaiting(_commonConst.userMessageSelectPieces, 0, NextTurn);
 
                 for (int i = 0; i < alignedPerPlayer.Length; i++) {
                     List<BoopVector> aligned = alignedPerPlayer[i];

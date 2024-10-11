@@ -55,16 +55,13 @@ public class PlayerIOManager {
         if (!CheckClient())
             return;
 
-        System.Random r = new System.Random();
-        string roomId = $"{GlobalManager.Instance.CommonConst.defaultRoomID}_{r.Next(1000)}";
-
         _client.Multiplayer.CreateRoom(
-            roomId,
+            null,
             "Lobby",
             true,
             null,
             (string roomId) => {
-                JoinRoom(roomId, null);
+                JoinRoom(roomId, null, null);
                 onSuccess?.Invoke(roomId);
             },
             (PlayerIOError error) => {
@@ -73,7 +70,7 @@ public class PlayerIOManager {
         );
     }
 
-    public void JoinRoom(string roomId, Action onSuccess) {
+    public void JoinRoom(string roomId, Action onSuccess, Action onError) {
         Utils.Log(this, "JoinRoom");
 
         if (!CheckClient())
@@ -91,6 +88,7 @@ public class PlayerIOManager {
             },
             (PlayerIOError error) => {
                 Utils.LogError(this, "JoinRoom", error.Message);
+                onError?.Invoke();
             }
         );
     }

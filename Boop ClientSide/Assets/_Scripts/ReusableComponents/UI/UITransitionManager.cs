@@ -22,7 +22,6 @@ public class UITransitionManager : MonoBehaviour {
     }
 
     public async Task Show() {
-        Utils.Log(this, "Show", "start");
         int delay = 50;
 
         _background.gameObject.SetActive(true);
@@ -36,7 +35,6 @@ public class UITransitionManager : MonoBehaviour {
             AnimStripe(_stripes[i], _stripesPos[i]);
             await Task.Delay(delay);
         }
-        Utils.Log(this, "Show", "end");
     }
 
     public async Task Hide(bool instant = false) {

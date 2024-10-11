@@ -6,22 +6,22 @@ public class UIViewCreateJoin : UIView {
     [SerializeField] private UIButton _createButton;
     [SerializeField] private UIButton _joinButton;
     [SerializeField] private UIButton _copyButton;
-    [SerializeField] private UIButton _backButton;
     [SerializeField] private TMP_InputField _inputField;
     [SerializeField] private TextMeshProUGUI _roomID;
 
     private int _index;
 
 
-    public override void Init(params object[] parameters) {
-        base.Init(parameters);
+    public override void Show(params object[] parameters) {
+        base.Show(parameters);
+        ReInit();
+    }
 
+    protected override void Init(params object[] parameters) {
+        base.Init(parameters);
         _createButton.onClick.AddListener(Create);
         _joinButton.onClick.AddListener(Join);
         _copyButton.onClick.AddListener(Copy);
-        _backButton.onClick.AddListener(Back);
-
-        ReInit();
     }
 
     private void Join() {
@@ -31,7 +31,8 @@ public class UIViewCreateJoin : UIView {
         }
         else if (_index == 1) {
             GlobalManager.Instance.Loading.Load(true);
-            GlobalManager.Instance.PlayerIOManager.JoinRoom(_inputField.text, () => { GlobalManager.Instance.Loading.Load(false); });
+            Action act = () => { GlobalManager.Instance.Loading.Load(false); };
+            GlobalManager.Instance.PlayerIOManager.JoinRoom(_inputField.text, act, act);
         }
 
         _index++;
@@ -55,9 +56,11 @@ public class UIViewCreateJoin : UIView {
         GUIUtility.systemCopyBuffer = _roomID.text;
     }
 
-    public void Back() {
-        if (_index == 0)
+    public override void Back() {
+        if (_index == 0) {
+            base.Back();
             return;
+        }
 
         GlobalManager.Instance.PlayerIOManager.LeaveRoom();
 

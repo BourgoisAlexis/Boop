@@ -5,7 +5,7 @@ public class CommonConst {
     //Server Messages
     public string serverMessageError = "servermessage_error";
     public string serverMessageJoin = "servermessage_join";
-    public string serverMessageGameInit = "servermessage_gameinit";
+    public string serverMessageLoadScene = "servermessage_loadscene";
     public string serverMessageAddPiece = "servermessage_addpiece";
     public string serverMessageAlignedPieces = "servermessage_alignedpieces";
     public string serverMessageSelectPieces = "servermessage_selectpieces";
@@ -14,6 +14,7 @@ public class CommonConst {
     //User Messages
     public string userMessageAddPiece = "usermessage_addpiece";
     public string userMessageSelectPieces = "usermessage_selectpieces";
+    public string userMessageSceneLoaded = "usermessage_sceneloaded";
 }
 
 public enum GameState {

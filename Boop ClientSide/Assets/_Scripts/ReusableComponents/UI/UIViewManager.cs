@@ -20,12 +20,17 @@ public class UIViewManager : MonoBehaviour {
             HideView(_currentViewIndex);
 
         _views[viewIndex].gameObject.SetActive(true);
-        _views[viewIndex].Init(parameters);
+        _views[viewIndex].Show(parameters);
 
         _currentViewIndex = viewIndex;
     }
 
     private void HideView(int index) {
         _views[index].gameObject.SetActive(false);
+    }
+
+    public void Back() {
+        if (_currentViewIndex > 0)
+            ShowView(_currentViewIndex - 1);
     }
 }

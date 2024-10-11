@@ -117,6 +117,7 @@ public class BoardModel {
         }
 
         CheckForAlignment(modified, ref aligned);
+
         aligned = aligned.Distinct(new VectorComparer()).ToList();
 
         alignedPerPlayer = new List<BoopVector>[] {

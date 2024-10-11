@@ -52,7 +52,6 @@ public class GlobalManager : MonoBehaviour {
         _uiTransitionManager = FindObjectOfType<UITransitionManager>();
 
         _navigationManager.onSceneLoaded += GetSceneManager;
-        ConnectToPlayerIO();
 
         _loading.Load(false);
     }
@@ -63,15 +62,18 @@ public class GlobalManager : MonoBehaviour {
     }
 
 
-    public void ConnectToPlayerIO() {
+    public void ConnectToPlayerIO(string userID) {
         _loading.Load(true);
 
-        _playerIOManager.Init("boop-icbnqap9eeykmbikigg6xw", "Alexis", null);
+        _playerIOManager.Init("boop-icbnqap9eeykmbikigg6xw", userID, null);
 
         _playerIOManager.HandleMessage(_commonConst.serverMessageError, OnlineError);
         _playerIOManager.HandleMessage(_commonConst.serverMessageJoin, Join);
-        _playerIOManager.HandleMessage(_commonConst.serverMessageGameInit, InitGame);
+        _playerIOManager.HandleMessage(_commonConst.serverMessageLoadScene, LoadScene);
+
         _playerIOManager.HandleMessage(_commonConst.serverMessageNextTurn, NextTurn);
+
+        _sceneManager.GoToView(1);
         _loading.Load(false);
     }
 
@@ -88,10 +90,6 @@ public class GlobalManager : MonoBehaviour {
         _playerIndex = int.Parse(infos[0]);
     }
 
-    private void InitGame(string[] infos) {
-        _navigationManager.LoadScene(1);
-    }
-
     private void NextTurn(string[] infos) {
         _currentPlayerIndex = int.Parse(infos[0]);
         string serverBoard = infos[1];
@@ -102,5 +100,11 @@ public class GlobalManager : MonoBehaviour {
 
         if (_currentPlayerIndex == _playerIndex)
             _boardController.NextTurn();
+    }
+
+    private async void LoadScene(string[] infos) {
+        int index = int.Parse(infos[0]);
+        await _navigationManager.LoadScene(index);
+        _playerIOManager.SendMessage(_commonConst.userMessageSceneLoaded);
     }
 }
