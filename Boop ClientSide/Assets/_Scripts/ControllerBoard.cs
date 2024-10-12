@@ -2,18 +2,19 @@ using DG.Tweening;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BoardController : SceneManager {
+public class ControllerBoard : SceneManager {
     #region Variables
     [SerializeField] private GameObject _prefabSquare;
     [SerializeField] private GameObject _prefabPiece;
 
     private BoardSquareModel[,] _squares;
+    private BoardModel _model;
 
     private BoardState _state = BoardState.Default;
     private BoopVector _selectedSquare = null;
     private List<BoopVector> _alignedSquares = new List<BoopVector>();
-    private BoardModel _model;
 
+    //Accessors
     public BoardModel Model => _model;
     #endregion
 
@@ -22,16 +23,16 @@ public class BoardController : SceneManager {
         _model = new BoardModel();
         _model.Init();
         _model.onBoop += Boop;
-        _model.onWin += Win;
 
         GetComponent<InputManager>().Init();
         GetComponent<UIViewBoard>().Init(_model);
 
         PlayerIOManager playerIO = GlobalManager.Instance.PlayerIOManager;
         CommonConst commonConst = GlobalManager.Instance.CommonConst;
-        playerIO.HandleMessage(commonConst.serverMessageAddPiece, AddPiece);
+        playerIO.HandleMessage(commonConst.serverMessageAddPiece, AddPiece, 2);
         playerIO.HandleMessage(commonConst.serverMessageAlignedPieces, AlignedPieces);
-        playerIO.HandleMessage(commonConst.serverMessageSelectPieces, SelectPieces);
+        playerIO.HandleMessage(commonConst.serverMessageSelectPieces, SelectPieces, 3);
+        playerIO.HandleMessage(commonConst.serverMessageWin, Win, 1);
 
         BoardSpawn();
     }
@@ -57,6 +58,11 @@ public class BoardController : SceneManager {
 
     //Actions
     public void Click(BoopVector v, bool rightClick) {
+        if (v == null) {
+            Utils.LogError(this, "Click", "v is null");
+            return;
+        }
+
         _squares[v.x, v.y].square.Click();
 
         switch (_state) {
@@ -101,7 +107,7 @@ public class BoardController : SceneManager {
         if (v.Equals(_selectedSquare))
             return;
 
-        _model.EvaluateAlignment(_selectedSquare, v, out List<BoopVector> selectedSquares);
+        List<BoopVector> selectedSquares = _model.EvaluateAlignmentFromTo(_selectedSquare, v);
 
         if (selectedSquares != null && selectedSquares.Count == 3) {
             string[] pos = new string[] {
@@ -134,37 +140,42 @@ public class BoardController : SceneManager {
 
 
     public void RemovePiece(BoopVector v) {
+        if (v == null) {
+            Utils.LogError(this, "Remove", "v is null");
+            return;
+        }
+
         BoardSquareModel square = _squares[v.x, v.y];
 
-        if (square.piece == null)
+        if (square.piece == null) {
+            Utils.LogError(this, "Remove", "square.piece is null");
             return;
+        }
 
         square.piece.Delete(() => { square.piece = null; });
     }
 
-    private void Win(List<BoopVector> aligned, int playerIndex) {
-        Utils.Log(this, "Win", $"Player {playerIndex} won");
-
-        //foreach (BoopVector pos in aligned)
-        //    _squares[pos.x, pos.y].square.SetBaseColor(Color.yellow);
-    }
-
     private void Boop(BoopVector origin, BoopVector destination) {
-        BoardSquareModel ori = _squares[origin.x, origin.y];
+        if (origin == null || destination == null) {
+            Utils.LogError(this, "Boop", "one of the vectors is null");
+            return;
+        }
+
+        BoardSquareModel originSquare = _squares[origin.x, origin.y];
 
         if (destination.x >= 0 && destination.x < _model.Size && destination.y >= 0 && destination.y < _model.Size) {
-            BoardSquareModel desti = _squares[destination.x, destination.y];
+            BoardSquareModel destinationSquare = _squares[destination.x, destination.y];
 
-            Transform t = ori.piece.transform;
-            t.parent = desti.square.transform;
+            Transform t = originSquare.piece.transform;
+            t.parent = destinationSquare.square.transform;
             t.transform.DOLocalMove(Vector3.zero, 0.2f);
 
-            desti.piece = ori.piece;
-            ori.piece = null;
+            destinationSquare.piece = originSquare.piece;
+            originSquare.piece = null;
         }
         else {
             BoopVector direction = destination - origin;
-            Transform t = ori.piece.transform;
+            Transform t = originSquare.piece.transform;
             t.parent = null;
             t.DOMove(t.transform.position + new Vector3(direction.x, 0, direction.y), 0.2f);
             RemovePiece(origin);
@@ -172,6 +183,11 @@ public class BoardController : SceneManager {
     }
 
     private void AddPiece(BoopVector v, int pieceValue) {
+        if (v == null) {
+            Utils.LogError(this, "AddPiece", "v is null");
+            return;
+        }
+
         BoardSquareModel square = _squares[v.x, v.y];
 
         GameObject instantiated = Instantiate(_prefabPiece, square.square.transform);
@@ -193,10 +209,10 @@ public class BoardController : SceneManager {
         foreach (string info in infos)
             pos.Add(BoopVector.FromString(info));
 
-        _alignedSquares = pos;
-
         foreach (BoopVector p in pos)
             _squares[p.x, p.y].square.SetBaseColor(Color.yellow);
+
+        _alignedSquares = pos;
     }
 
     public void AddPiece(string[] infos) {
@@ -207,7 +223,7 @@ public class BoardController : SceneManager {
     }
 
     public void SelectPieces(string[] infos) {
-        _model.EvaluateAlignment(BoopVector.FromString(infos[0]), BoopVector.FromString(infos[2]), out List<BoopVector> selectedSquares);
+        List<BoopVector> selectedSquares = _model.EvaluateAlignmentFromTo(BoopVector.FromString(infos[0]), BoopVector.FromString(infos[2]));
 
         foreach (BoopVector pos in selectedSquares) {
             BoardSquareModel sm = _squares[pos.x, pos.y];
@@ -221,5 +237,9 @@ public class BoardController : SceneManager {
         _state = BoardState.Placing;
         _selectedSquare = null;
         _alignedSquares.Clear();
+    }
+
+    public void Win(string[] infos) {
+
     }
 }

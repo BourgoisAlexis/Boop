@@ -1,9 +1,11 @@
 using DG.Tweening;
 using System;
+using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine;
 
 public class BoardSquare : MonoBehaviour {
+    #region Variables
     [SerializeField] private MeshRenderer _visual;
     [SerializeField] private float _scaleValue;
     [SerializeField] private Color _highlightColor;
@@ -13,9 +15,12 @@ public class BoardSquare : MonoBehaviour {
     private Vector3 _baseScale;
     private Color _color = Color.white;
 
+    //Accessors
     public int X => _x;
     public int Y => _y;
     public BoopVector Pos => new BoopVector(_x, _y);
+    #endregion
+
 
     public void Init(int x, int y) {
         _x = x;
@@ -29,14 +34,8 @@ public class BoardSquare : MonoBehaviour {
         SetColor(color);
     }
 
-    public async void SetColor(Color color, float duration = 0) {
-        await _visual.material.DOColor(color, AppConst.globalAnimDuration).AsyncWaitForCompletion();
-
-        if (duration <= 0)
-            return;
-
-        await Task.Delay(Mathf.RoundToInt(duration * 1000));
-        _visual.material.DOColor(_color, AppConst.globalAnimDuration);
+    public void SetColor(Color color, float duration = 0) {
+        StartCoroutine(SetColorCorout(color, duration));
     }
 
 
@@ -54,9 +53,25 @@ public class BoardSquare : MonoBehaviour {
         _visual.material.DOColor(highlight ? _highlightColor : _color, AppConst.globalAnimDuration);
     }
 
-    public async void Click() {
+    public void Click() {
+        StartCoroutine(ClickCorout());
+    }
+
+
+    //Anim Coroutines
+    private IEnumerator SetColorCorout(Color color, float duration = 0) {
+        yield return _visual.material.DOColor(color, AppConst.globalAnimDuration).WaitForCompletion();
+
+        if (duration <= 0)
+            yield break;
+
+        yield return new WaitForSeconds(duration);
+        _visual.material.DOColor(_color, AppConst.globalAnimDuration);
+    }
+
+    private IEnumerator ClickCorout() {
         float diff = Math.Abs(1 - _scaleValue) + 0.2f;
-        await _visual.transform.DOScale(new Vector3(1 - diff, _baseScale.y, 1 - diff), AppConst.globalAnimDuration).AsyncWaitForCompletion();
+        yield return _visual.transform.DOScale(new Vector3(1 - diff, _baseScale.y, 1 - diff), AppConst.globalAnimDuration).WaitForCompletion();
         _visual.transform.DOScale(_baseScale, AppConst.globalAnimDuration);
     }
 }

@@ -6,11 +6,14 @@ using UnityEngine.UI;
 using DG.Tweening;
 
 public class UIButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler {
+    #region Variables
     public UnityEvent onClick;
 
     private Image _image;
     private TextMeshProUGUI _tmproContent;
     private float _fadeDuration = 0.15f;
+    #endregion
+
 
     private void Awake() {
         _image = GetComponent<Image>();

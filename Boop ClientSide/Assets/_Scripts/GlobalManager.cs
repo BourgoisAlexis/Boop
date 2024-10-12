@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Text;
 using UnityEngine;
 
@@ -5,15 +6,25 @@ public class GlobalManager : MonoBehaviour {
     public static GlobalManager Instance;
 
     #region Variables
-    public bool showLowPriorityLogs;
-    public bool useLocalPlayerIO;
-
     private CommonConst _commonConst;
     private PlayerIOManager _playerIOManager;
     private NavigationManager _navigationManager;
     private UITransitionManager _uiTransitionManager;
     private SceneManager _sceneManager;
     private Loading _loading;
+
+    //Debug
+    [Header("Debug")]
+    public bool showLowPriorityLogs;
+    public bool useLocalPlayerIO;
+
+    //Gameplay
+    private int _playerIndex;
+    private int _currentPlayerIndex;
+
+    public int playerValue => _playerIndex == 0 ? -1 : 1;
+    public int currentPlayerValue => _currentPlayerIndex == 0 ? -1 : 1;
+    private ControllerBoard _controllerBoard => _sceneManager as ControllerBoard;
 
     //Accessors
     public CommonConst CommonConst => _commonConst;
@@ -22,14 +33,6 @@ public class GlobalManager : MonoBehaviour {
     public UITransitionManager UITransitionManager => _uiTransitionManager;
     public SceneManager SceneManager => _sceneManager;
     public Loading Loading => _loading;
-
-    //Gameplay
-    private BoardController _boardController => _sceneManager as BoardController;
-    private int _playerIndex;
-    private int _currentPlayerIndex;
-
-    public int playerValue => _playerIndex == 0 ? -1 : 1;
-    public int currentPlayerValue => _currentPlayerIndex == 0 ? -1 : 1;
     #endregion
 
     private void Awake() {
@@ -56,22 +59,27 @@ public class GlobalManager : MonoBehaviour {
         _loading.Load(false);
     }
 
+
     private void GetSceneManager() {
         _sceneManager = FindObjectOfType<SceneManager>();
         _sceneManager?.Init();
     }
 
-
     public void ConnectToPlayerIO(string userID) {
+        if (string.IsNullOrEmpty(userID)) {
+            Utils.LogError(this, "ConnectToPlayerIO", "userID is null or empty");
+            return;
+        }
+
         _loading.Load(true);
 
         _playerIOManager.Init("boop-icbnqap9eeykmbikigg6xw", userID, null);
 
         _playerIOManager.HandleMessage(_commonConst.serverMessageError, OnlineError);
-        _playerIOManager.HandleMessage(_commonConst.serverMessageJoin, Join);
-        _playerIOManager.HandleMessage(_commonConst.serverMessageLoadScene, LoadScene);
+        _playerIOManager.HandleMessage(_commonConst.serverMessageJoin, Join, 1);
+        _playerIOManager.HandleMessage(_commonConst.serverMessageLoadScene, LoadScene, 1);
 
-        _playerIOManager.HandleMessage(_commonConst.serverMessageNextTurn, NextTurn);
+        _playerIOManager.HandleMessage(_commonConst.serverMessageNextTurn, NextTurn, 2);
 
         _sceneManager.GoToView(1);
         _loading.Load(false);
@@ -87,23 +95,30 @@ public class GlobalManager : MonoBehaviour {
     }
 
     private void Join(string[] infos) {
-        _playerIndex = int.Parse(infos[0]);
+        if (int.TryParse(infos[0], out _playerIndex) == false)
+            Utils.LogError(this, "Join", "can't parse infos[0]");
     }
 
     private void NextTurn(string[] infos) {
-        _currentPlayerIndex = int.Parse(infos[0]);
+        if (int.TryParse(infos[0], out _currentPlayerIndex) == false) {
+            Utils.LogError(this, "NextTurn", "can't parse infos[0]");
+            return;
+        }
+
         string serverBoard = infos[1];
-        string localBoard = CommonUtils.BoardState(_boardController.Model.Board);
+        string localBoard = CommonUtils.BoardState(_controllerBoard.Model.Board);
 
         if (serverBoard != localBoard)
             Utils.LogError(this, "NextTurn", "Need synchronisation");
 
         if (_currentPlayerIndex == _playerIndex)
-            _boardController.NextTurn();
+            _controllerBoard.NextTurn();
     }
 
     private async void LoadScene(string[] infos) {
-        int index = int.Parse(infos[0]);
+        if (int.TryParse(infos[0], out int index) == false)
+            Utils.LogError(this, "Join", "can't parse infos[0]");
+
         await _navigationManager.LoadScene(index);
         _playerIOManager.SendMessage(_commonConst.userMessageSceneLoaded);
     }

@@ -3,6 +3,14 @@ using System.Collections.Generic;
 using System.Text;
 
 public static class CommonUtils {
+    public static void ErrorOnParams(string source, string methodName) {
+        Utils.LogError(source, methodName, "not the expected parameters");
+    }
+
+    public static void ErrorOnResult(string source, string methodName) {
+        Utils.LogError(source, methodName, "not the expected result");
+    }
+
     public static string[] GetMessageParams(Message m) {
         List<string> infos = new List<string>();
         for (int i = 0; i < m.Count; i++)

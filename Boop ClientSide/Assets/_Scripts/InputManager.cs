@@ -1,18 +1,23 @@
 using UnityEngine;
 
 public class InputManager : MonoBehaviour {
+    #region Variables
     private Camera _camera;
     private BoardSquare _currentSquare;
-    private BoardController _boardController;
+    private ControllerBoard _controllerBoard;
+    #endregion
+
 
     public void Init() {
         _camera = Camera.main;
-        _boardController = GetComponent<BoardController>();
+        _controllerBoard = GetComponent<ControllerBoard>();
     }
 
     private void Update() {
-        if (_camera == null)
+        if (_camera == null) {
+            Utils.LogError(this, "Update", "_camera is null");
             return;
+        }
 
         Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
         RaycastHit[] hits = Physics.RaycastAll(ray, 200);
@@ -40,8 +45,8 @@ public class InputManager : MonoBehaviour {
             return;
 
         if (Input.GetMouseButtonDown(0))
-            _boardController.Click(_currentSquare.Pos, false);
+            _controllerBoard.Click(_currentSquare.Pos, false);
         else if (Input.GetMouseButtonDown(1))
-            _boardController.Click(_currentSquare.Pos, true);
+            _controllerBoard.Click(_currentSquare.Pos, true);
     }
 }

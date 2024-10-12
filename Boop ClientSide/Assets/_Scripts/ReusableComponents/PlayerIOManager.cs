@@ -4,6 +4,15 @@ using PlayerIOClient;
 using System;
 using System.Linq;
 
+public class HandledMessage {
+    public Action<string[]> onMessage;
+    public int infosLength;
+
+    public HandledMessage(int infosLength) {
+        this.infosLength = infosLength;
+    }
+}
+
 public class PlayerIOManager {
     #region Variables
     private Connection _connection;
@@ -11,7 +20,7 @@ public class PlayerIOManager {
     private bool _processing;
 
     private List<Message> _messages = new List<Message>();
-    private Dictionary<string, Action<string[]>> _handledMessageTypes = new Dictionary<string, Action<string[]>>();
+    private Dictionary<string, HandledMessage> _handledMessageTypes = new Dictionary<string, HandledMessage>();
     #endregion
 
 
@@ -129,8 +138,15 @@ public class PlayerIOManager {
         while (_messages.Count > 0) {
             Message m = _messages.First();
 
-            if (_handledMessageTypes.ContainsKey(m.Type))
-                _handledMessageTypes[m.Type]?.Invoke(CommonUtils.GetMessageParams(m));
+            if (_handledMessageTypes.ContainsKey(m.Type)) {
+                string[] infos = CommonUtils.GetMessageParams(m);
+                if (infos == null || infos.Length < _handledMessageTypes[m.Type].infosLength) {
+                    CommonUtils.LogMessage(m);
+                    Utils.LogError(this, "ProcessMessages", "infos are wrong");
+                }
+                else
+                    _handledMessageTypes[m.Type].onMessage?.Invoke(infos);
+            }
 
             _messages.Remove(m);
         }
@@ -138,11 +154,18 @@ public class PlayerIOManager {
         _processing = false;
     }
 
-    public void HandleMessage(string id, Action<string[]> action) {
-        if (_handledMessageTypes.ContainsKey(id))
-            _handledMessageTypes[id] += action;
-        else
-            _handledMessageTypes.Add(id, action);
+    public void HandleMessage(string id, Action<string[]> action, int infosLength = 0) {
+        HandledMessage m = null;
+
+        if (_handledMessageTypes.ContainsKey(id)) {
+            m = _handledMessageTypes[id];
+        }
+        else {
+            m = new HandledMessage(infosLength);
+            _handledMessageTypes.Add(id, m);
+        }
+
+        m.onMessage += action;
     }
 
 

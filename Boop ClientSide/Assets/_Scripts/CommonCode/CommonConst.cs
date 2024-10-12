@@ -10,6 +10,7 @@ public class CommonConst {
     public string serverMessageAlignedPieces = "servermessage_alignedpieces";
     public string serverMessageSelectPieces = "servermessage_selectpieces";
     public string serverMessageNextTurn = "servermessage_nextturn";
+    public string serverMessageWin = "servermessage_win";
 
     //User Messages
     public string userMessageAddPiece = "usermessage_addpiece";

@@ -38,6 +38,7 @@ namespace Boop {
             Utils.Log(this, $"GameStarted : Room start : {RoomId}");
             _model = new BoardModel();
             _model.Init();
+            _model.onWin += Win;
         }
 
         public override void GameClosed() {
@@ -154,9 +155,9 @@ namespace Boop {
 
         private void SelectPieces(Player player, Message m) {
             string[] infos = CommonUtils.GetMessageParams(m);
-            _model.EvaluateAlignment(BoopVector.FromString(infos[0]), BoopVector.FromString(infos[2]), out List<BoopVector> list);
+            List<BoopVector> selectedSquares = _model.EvaluateAlignmentFromTo(BoopVector.FromString(infos[0]), BoopVector.FromString(infos[2]));
 
-            if (list != null && list.Count == 3)
+            if (selectedSquares != null && selectedSquares.Count == 3)
                 SpreadMessage(_commonConst.serverMessageSelectPieces, player, m);
         }
 
@@ -166,6 +167,16 @@ namespace Boop {
                 _currentPlayerIndex = 0;
 
             Broadcast(_commonConst.serverMessageNextTurn, _currentPlayerIndex.ToString(), CommonUtils.BoardState(_model.Board));
+        }
+
+        private void Win(List<BoopVector> aligned, int playerIndex) {
+            if (aligned == null || aligned.Count < 3) {
+                CommonUtils.ErrorOnParams("Game", "Win");
+                return;
+            }
+
+            Utils.Log(this, "Win", $"Player {playerIndex} won");
+            Broadcast(_commonConst.serverMessageWin, playerIndex.ToString());
         }
         #endregion
     }

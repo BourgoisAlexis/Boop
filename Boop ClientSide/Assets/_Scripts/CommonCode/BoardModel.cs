@@ -15,6 +15,7 @@ public class BoardModel {
     private PlayerModel[] _playerModels;
     private GameState _gameState;
 
+    //Accessors
     public int Size => _boardSize;
     public int[,] Board => _board;
     #endregion
@@ -29,15 +30,24 @@ public class BoardModel {
         _gameState = GameState.Gameplay;
     }
 
+
     public int AddPieceOnBoard(BoopVector v, int pieceValue) {
+        if (v == null || pieceValue == 0) {
+            CommonUtils.ErrorOnParams("Boardmodel", "AddPieceOnBoard");
+            return 0;
+        }
+
         return AddPieceOnBoard(v, Math.Abs(pieceValue) == 2, pieceValue < 0 ? -1 : 1);
     }
 
     public int AddPieceOnBoard(BoopVector v, bool large, int playerValue) {
-        if (_board[v.x, v.y] != 0) {
-            Utils.LogError(this, "AddPieceOnBoard", $"{v.x} {v.y} is already occupied");
+        if (v == null || playerValue == 0) {
+            CommonUtils.ErrorOnParams("Boardmodel", "AddPieceOnBoard");
             return 0;
         }
+
+        if (_board[v.x, v.y] != 0)
+            return 0;
 
         int pieceValue = (large ? 2 : 1) * playerValue;
 
@@ -45,7 +55,7 @@ public class BoardModel {
         int pieceIndex = Math.Abs(pieceValue) - 1;
 
         if (_playerModels[playerIndex].pieces[pieceIndex] < 1) {
-            Utils.LogError(this, "AddPieceOnBoard", $"player {playerIndex} has no piece of type {(large ? "large" : "normal")}");
+            Utils.LogError("BoardModel", "AddPieceOnBoard", $"player {playerIndex} has no piece of type {(large ? "large" : "normal")}");
             return 0;
         }
 
@@ -58,6 +68,11 @@ public class BoardModel {
     }
 
     public void RemovePieceFromBoard(BoopVector v, bool upgrade = false) {
+        if (v == null) {
+            CommonUtils.ErrorOnParams("Boardmodel", "RemovePieceFromBoard");
+            return;
+        }
+
         int pieceValue = _board[v.x, v.y];
 
         if (pieceValue == 0)
@@ -75,7 +90,13 @@ public class BoardModel {
 
     public BoopVector[] GetPossibleDirections(BoopVector v) {
         List<BoopVector> directions = new List<BoopVector>();
-        List<int> ys = new List<int>();
+
+        if (v == null) {
+            CommonUtils.ErrorOnParams("Boardmodel", "GetPossibleDirections");
+            return directions.ToArray();
+        }
+
+        //X
         List<int> xs = new List<int>();
 
         if (v.x > 0)
@@ -86,6 +107,9 @@ public class BoardModel {
         if (v.x < _boardSize - 1)
             xs.Add(1);
 
+        //Y
+        List<int> ys = new List<int>();
+
         if (v.y < _boardSize - 1)
             ys.Add(1);
 
@@ -94,15 +118,21 @@ public class BoardModel {
         if (v.y > 0)
             ys.Add(-1);
 
-        foreach (int i in xs)
-            foreach (int j in ys)
-                if (i != 0 || j != 0)
-                    directions.Add(new BoopVector(i, j));
+        foreach (int x in xs)
+            foreach (int y in ys)
+                if (x != 0 || y != 0)
+                    directions.Add(new BoopVector(x, y));
 
         return directions.ToArray();
     }
 
     public void Simulate(BoopVector v, out List<BoopVector>[] alignedPerPlayer) {
+        if (v == null) {
+            CommonUtils.ErrorOnParams("Boardmodel", "Simulate");
+            alignedPerPlayer = new List<BoopVector>[0];
+            return;
+        }
+
         List<BoopVector> aligned = new List<BoopVector>();
         BoopVector[] directions = GetPossibleDirections(v);
         List<BoopVector> modified = new List<BoopVector>() { v };
@@ -127,15 +157,21 @@ public class BoardModel {
     }
 
     private void Boop(BoopVector v, BoopVector direction, ref List<BoopVector> modified) {
+        if (v == null || direction == null) {
+            CommonUtils.ErrorOnParams("Boardmodel", "Boop");
+            return;
+        }
+
         BoopVector destination = v + direction;
 
         if (destination.x >= 0 && destination.x < _boardSize && destination.y >= 0 && destination.y < _boardSize) {
-            if (_board[destination.x, destination.y] == 0) {
-                _board[destination.x, destination.y] = _board[v.x, v.y];
-                modified.Add(destination);
-                _board[v.x, v.y] = 0;
-                onBoop?.Invoke(v, destination);
-            }
+            if (_board[destination.x, destination.y] != 0)
+                return;
+
+            _board[destination.x, destination.y] = _board[v.x, v.y];
+            modified.Add(destination);
+            _board[v.x, v.y] = 0;
+            onBoop?.Invoke(v, destination);
         }
         else {
             RemovePieceFromBoard(v);
@@ -144,6 +180,11 @@ public class BoardModel {
     }
 
     public void CheckForAlignment(List<BoopVector> modified, ref List<BoopVector> aligned) {
+        if (modified == null || aligned == null) {
+            CommonUtils.ErrorOnParams("Boardmodel", "CheckForAlignment");
+            return;
+        }
+
         foreach (BoopVector v in modified) {
             //Column
             Straight(v, 0, 1, ref aligned);
@@ -163,6 +204,11 @@ public class BoardModel {
     }
 
     private void Straight(BoopVector startingPos, int iterrateX, int iterrateY, ref List<BoopVector> aligned) {
+        if (startingPos == null || aligned == null) {
+            CommonUtils.ErrorOnParams("Boardmodel", "Straight");
+            return;
+        }
+
         List<BoopVector> possiblePos = new List<BoopVector>();
 
         for (int i = 0; i < _boardSize; i++) {
@@ -176,6 +222,11 @@ public class BoardModel {
     }
 
     private void Diagonal(BoopVector startingPos, int iterrateX, int iterrateY, ref List<BoopVector> aligned) {
+        if (startingPos == null || aligned == null) {
+            CommonUtils.ErrorOnParams("Boardmodel", "Diagonal");
+            return;
+        }
+
         List<BoopVector> possiblePos = new List<BoopVector>();
         int x = 0;
         int y = 0;
@@ -201,6 +252,11 @@ public class BoardModel {
     }
 
     private void EvaluateAlignment(List<BoopVector> positions, ref List<BoopVector> aligned) {
+        if (positions == null || aligned == null) {
+            CommonUtils.ErrorOnParams("Boardmodel", "EvaluateAlignment");
+            return;
+        }
+
         int sign = 0;
         List<BoopVector> validPos = new List<BoopVector>();
 
@@ -233,23 +289,27 @@ public class BoardModel {
         }
     }
 
-    public void EvaluateAlignment(BoopVector start, BoopVector end, out List<BoopVector> selectedSquares) {
-        Utils.Log(this, "EvaluateAlignment", $"Evaluate from {start.ToString()} to {end.ToString()}");
+    public List<BoopVector> EvaluateAlignmentFromTo(BoopVector start, BoopVector end) {
+        List<BoopVector> selectedSquares = new List<BoopVector>();
 
-        selectedSquares = new List<BoopVector>();
+        if (start == null || end == null) {
+            CommonUtils.ErrorOnParams("Boardmodel", "EvaluateAlignment");
+            return selectedSquares;
+        }
+
         BoopVector direction = end - start;
         BoopVector absDir = new BoopVector(Math.Abs(direction.x), Math.Abs(direction.y));
 
         if (absDir.x != 2 && absDir.y != 2)
-            return;
+            return selectedSquares;
 
         if (absDir.x == 2)
             if (absDir.y != 0 && absDir.y != 2)
-                return;
+                return selectedSquares;
 
         if (absDir.y == 2)
             if (absDir.x != 0 && absDir.x != 2)
-                return;
+                return selectedSquares;
 
         direction = new BoopVector(Math.Sign(direction.x), Math.Sign(direction.y));
         selectedSquares.Add(start);
@@ -261,14 +321,21 @@ public class BoardModel {
             if (Math.Sign(_board[start.x, start.y]) == sign)
                 continue;
 
-            return;
+            return selectedSquares;
         }
 
         foreach (BoopVector v in selectedSquares)
             RemovePieceFromBoard(v, !IsLargePiece(v));
+
+        return selectedSquares;
     }
 
     public bool IsLargePiece(BoopVector v) {
+        if (v == null) {
+            CommonUtils.ErrorOnParams("Boardmodel", "IsLargePiece");
+            return false;
+        }
+
         return Math.Abs(_board[v.x, v.y]) == 2;
     }
 }
