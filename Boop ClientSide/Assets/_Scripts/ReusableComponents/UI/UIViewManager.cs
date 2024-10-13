@@ -2,8 +2,12 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class UIViewManager : MonoBehaviour {
+    #region Variables
     [SerializeField] private List<UIView> _views = new List<UIView>();
+
     private int _currentViewIndex = -1;
+    #endregion
+
 
     public void Init() {
         for (int i = 0; i < _views.Count; i++)
@@ -12,17 +16,19 @@ public class UIViewManager : MonoBehaviour {
         ShowView(0);
     }
 
-    public void ShowView(int viewIndex, params object[] parameters) {
-        if (viewIndex == _currentViewIndex)
+    public void ShowView(int index, params object[] parameters) {
+        if (index == _currentViewIndex || index < 0 || index >= _views.Count) {
+            Utils.LogError(this, "ShowView", $"index is {index}");
             return;
+        }
 
         if (_currentViewIndex >= 0 && _currentViewIndex < _views.Count)
             HideView(_currentViewIndex);
 
-        _views[viewIndex].gameObject.SetActive(true);
-        _views[viewIndex].Show(parameters);
+        _views[index].gameObject.SetActive(true);
+        _views[index].Show(parameters);
 
-        _currentViewIndex = viewIndex;
+        _currentViewIndex = index;
     }
 
     private void HideView(int index) {

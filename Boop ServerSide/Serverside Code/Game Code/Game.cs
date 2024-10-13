@@ -46,6 +46,7 @@ namespace Boop {
         }
 
         public override void UserJoined(Player player) {
+            //TODO : checker les playerJoinData pour la version du jeu
             player.Send(_commonConst.serverMessageJoin, (player.Id - 1).ToString());
 
             int playerN = 1;

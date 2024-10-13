@@ -42,12 +42,12 @@ public class UIViewCreateJoin : UIView {
         _createButton.gameObject.SetActive(false);
         _joinButton.gameObject.SetActive(false);
 
-        Action<string> act = (string roomID) => {
+        Action<string> action = (string roomID) => {
             _copyButton.gameObject.SetActive(true);
             _roomID.gameObject.SetActive(true);
             _roomID.text = roomID;
         };
-        GlobalManager.Instance.PlayerIOManager.CreateRoom(act);
+        GlobalManager.Instance.PlayerIOManager.CreateRoom(action);
 
         _index++;
     }

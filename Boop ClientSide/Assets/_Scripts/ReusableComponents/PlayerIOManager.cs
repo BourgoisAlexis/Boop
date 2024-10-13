@@ -17,21 +17,26 @@ public class PlayerIOManager {
     #region Variables
     private Connection _connection;
     private Client _client;
-    private bool _processing;
 
+    private bool _processing;
     private List<Message> _messages = new List<Message>();
     private Dictionary<string, HandledMessage> _handledMessageTypes = new Dictionary<string, HandledMessage>();
     #endregion
 
 
-    public void Init(string gameId, string userId, Action onSuccess) {
+    public void Init(string gameID, string userID, Action onSuccess) {
+        if (string.IsNullOrEmpty(gameID)) {
+            CommonUtils.ErrorOnParams("PlayerIOManager", "Init");
+            return;
+        }
+
         Application.runInBackground = true;
 
         PlayerIO.Authenticate(
-            gameId,                                     //Game ID         
+            gameID,                                     //Game ID         
             "public",                                   //Connection ID
             new Dictionary<string, string> {            //Auth arguments
-				{ "userId", userId },
+				{ "userId", userID },
             },
             null,                                   //PlayerInsight segments
             (Client client) => {
@@ -69,9 +74,9 @@ public class PlayerIOManager {
             "Lobby",
             true,
             null,
-            (string roomId) => {
-                JoinRoom(roomId, null, null);
-                onSuccess?.Invoke(roomId);
+            (string roomID) => {
+                JoinRoom(roomID, null, null);
+                onSuccess?.Invoke(roomID);
             },
             (PlayerIOError error) => {
                 Utils.LogError(this, "CreateRoom", error.Message);
@@ -79,14 +84,20 @@ public class PlayerIOManager {
         );
     }
 
-    public void JoinRoom(string roomId, Action onSuccess, Action onError) {
+    public void JoinRoom(string roomID, Action onSuccess, Action onError) {
+        if (string.IsNullOrEmpty(roomID)) {
+           CommonUtils.ErrorOnParams("PlayerIOManager", "Init");
+            onError?.Invoke();
+            return;
+        }
+
         Utils.Log(this, "JoinRoom");
 
         if (!CheckClient())
             return;
 
         _client.Multiplayer.JoinRoom(
-            roomId,                             //Room id. If set to null a random roomid is used
+            roomID,                             //Room id. If set to null a random roomid is used
             new Dictionary<string, string> {
                 { "gameVersion", $"{Application.version}" }
             },
@@ -114,6 +125,11 @@ public class PlayerIOManager {
 
     //Messages
     private void ReceiveMessage(object sender, Message m) {
+        if (sender == null || m == null) {
+            CommonUtils.ErrorOnParams("PlayerIOManager", "ReceiveMessage");
+            return;
+        }
+
         CommonUtils.LogMessage(m);
 
         _messages.Add(m);
@@ -125,6 +141,11 @@ public class PlayerIOManager {
     }
 
     public void SendMessage(string type, params object[] parameters) {
+        if (string.IsNullOrEmpty(type)) {
+            CommonUtils.ErrorOnParams("PlayerIOManager", "SendMessage");
+            return;
+        }
+
         if (!CheckConnection())
             return;
 
@@ -147,6 +168,9 @@ public class PlayerIOManager {
                 else
                     _handledMessageTypes[m.Type].onMessage?.Invoke(infos);
             }
+            else {
+                Utils.LogError(this, "ProcessMessages", $"message of type {m.Type} is not handled");
+            }
 
             _messages.Remove(m);
         }
@@ -155,6 +179,11 @@ public class PlayerIOManager {
     }
 
     public void HandleMessage(string id, Action<string[]> action, int infosLength = 0) {
+        if (string.IsNullOrEmpty(id) || action == null) {
+            CommonUtils.ErrorOnParams("PlayerIOManager", "HandleMessage");
+            return;
+        }
+
         HandledMessage m = null;
 
         if (_handledMessageTypes.ContainsKey(id)) {
@@ -181,7 +210,7 @@ public class PlayerIOManager {
 
     private bool CheckConnection() {
         if (_connection == null) {
-            Utils.LogError(this, "CheckClient", "_connection is null");
+            Utils.LogError(this, "CheckConnection", "_connection is null");
             return false;
         }
 
