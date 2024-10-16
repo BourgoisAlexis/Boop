@@ -12,6 +12,7 @@ public class GlobalManager : MonoBehaviour {
     private UITransitionManager _uiTransitionManager;
     private SceneManager _sceneManager;
     private Loading _loading;
+    private UINotificationManager _uiNotificationManager;
 
     //Debug
     [Header("Debug")]
@@ -33,16 +34,19 @@ public class GlobalManager : MonoBehaviour {
     public UITransitionManager UITransitionManager => _uiTransitionManager;
     public SceneManager SceneManager => _sceneManager;
     public Loading Loading => _loading;
+    public UINotificationManager UINotificationManager => _uiNotificationManager;
     #endregion
 
-    private void Awake() {
-        if (Instance == null)
-            Instance = this;
-        else
-            Destroy(this);
 
-        DontDestroyOnLoad(gameObject);
-        GetSceneManager();
+    private void Awake() {
+        if (Instance == null) {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else {
+            Destroy(gameObject);
+        }
+
     }
 
     private void Start() {
@@ -53,10 +57,11 @@ public class GlobalManager : MonoBehaviour {
         _loading = GetComponent<Loading>();
 
         _uiTransitionManager = FindObjectOfType<UITransitionManager>();
+        _uiNotificationManager = FindObjectOfType<UINotificationManager>();
 
-        _navigationManager.onSceneLoaded += GetSceneManager;
+        _navigationManager.onLoaded += GetSceneManager;
 
-        _loading.Load(false);
+        GetSceneManager();
     }
 
 
@@ -112,14 +117,14 @@ public class GlobalManager : MonoBehaviour {
             Utils.LogError(this, "NextTurn", "Need synchronisation");
 
         if (_currentPlayerIndex == _playerIndex)
-            _controllerBoard.NextTurn();
+            _controllerBoard.NextTurn(_currentPlayerIndex);
     }
 
-    private async void LoadScene(string[] infos) {
+    private void LoadScene(string[] infos) {
         if (int.TryParse(infos[0], out int index) == false)
             Utils.LogError(this, "Join", "can't parse infos[0]");
 
-        await _navigationManager.LoadScene(index);
-        _playerIOManager.SendMessage(_commonConst.userMessageSceneLoaded);
+        _navigationManager.AutoClearingActionOnLoaded(() => { _playerIOManager.SendMessage(_commonConst.userMessageSceneLoaded); });
+        _navigationManager.LoadScene(index);
     }
 }

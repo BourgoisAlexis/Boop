@@ -25,6 +25,7 @@ namespace Boop {
         private CommonConst _commonConst = new CommonConst();
         private BoardModel _model;
         private Random _random = new Random();
+        private int _playerN = 2;
 
         //Gameplay
         public int _currentPlayerIndex;
@@ -36,9 +37,6 @@ namespace Boop {
         #region Player.IO Methods
         public override void GameStarted() {
             Utils.Log(this, $"GameStarted : Room start : {RoomId}");
-            _model = new BoardModel();
-            _model.Init();
-            _model.onWin += Win;
         }
 
         public override void GameClosed() {
@@ -49,11 +47,9 @@ namespace Boop {
             //TODO : checker les playerJoinData pour la version du jeu
             player.Send(_commonConst.serverMessageJoin, (player.Id - 1).ToString());
 
-            int playerN = 1;
-
-            if (PlayerCount == playerN) {
+            if (PlayerCount == _playerN) {
                 Broadcast(_commonConst.serverMessageLoadScene, 1.ToString());
-                _messageWaiting = new MessageWaiting(_commonConst.userMessageSceneLoaded, playerN, GameInit);
+                _messageWaiting = new MessageWaiting(_commonConst.userMessageSceneLoaded, _playerN, GameInit);
             }
         }
 
@@ -72,6 +68,9 @@ namespace Boop {
 
                 case "usermessage_selectpieces":
                     SelectPieces(player, m);
+                    break;
+
+                case "usermessage_quit":
                     break;
             }
 
@@ -108,7 +107,19 @@ namespace Boop {
             return null;
         }
 
+        private void PlayAgain() {
+            Broadcast(_commonConst.serverMessageLoadScene, 1.ToString());
+            _messageWaiting = new MessageWaiting(_commonConst.userMessageSceneLoaded, _playerN, GameInit);
+        }
+
         private void GameInit() {
+            if (_model == null) {
+                _model = new BoardModel();
+                _model.onWin += Win;
+            }
+
+            _model.Init();
+
             _currentPlayerIndex = _random.NextDouble() > 0.5f ? 0 : 1;
             NextTurn();
         }
@@ -163,6 +174,9 @@ namespace Boop {
         }
 
         private void NextTurn() {
+            if (_model.GameState == GameState.Ended)
+                return;
+
             _currentPlayerIndex++;
             if (_currentPlayerIndex > Players.Count() - 1)
                 _currentPlayerIndex = 0;
@@ -178,6 +192,7 @@ namespace Boop {
 
             Utils.Log(this, "Win", $"Player {playerIndex} won");
             Broadcast(_commonConst.serverMessageWin, playerIndex.ToString());
+            _messageWaiting = new MessageWaiting(_commonConst.userMessagePlayAgain, _playerN, PlayAgain);
         }
         #endregion
     }

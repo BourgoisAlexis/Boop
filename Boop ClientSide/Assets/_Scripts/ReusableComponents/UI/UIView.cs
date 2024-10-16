@@ -14,7 +14,7 @@ public class UIView : MonoBehaviour {
     }
 
     protected virtual void Init(params object[] parameters) {
-        _backButton.onClick.AddListener(Back);
+        _backButton?.onClick.AddListener(Back);
         _initialized = true;
     }
 

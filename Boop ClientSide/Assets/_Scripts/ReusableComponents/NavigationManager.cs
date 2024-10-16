@@ -1,23 +1,25 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
 public class NavigationManager {
     #region Variables
-    public Action onLoadScene;
-    public Action onSceneLoaded;
+    public Action onLoad;
+    public Action onLoaded;
 
     private int _currentSceneIndex = 0;
+    private List<Action> _toClearOnLoaded = new List<Action>();
     #endregion
 
 
-    public async Task LoadScene(int index) {
+    public async void LoadScene(int index) {
         if (index < 0) {
             Utils.LogError(this, "LoadScene", "index is negative");
             return;
         }
 
-        onLoadScene?.Invoke();
+        onLoad?.Invoke();
 
         await GlobalManager.Instance.UITransitionManager.Show();
 
@@ -26,7 +28,12 @@ public class NavigationManager {
             await Task.Yield();
 
         _currentSceneIndex = index;
-        onSceneLoaded?.Invoke();
+        onLoaded?.Invoke();
+
+        foreach (Action action in _toClearOnLoaded)
+            onLoaded -= action;
+
+        _toClearOnLoaded.Clear();
 
         await GlobalManager.Instance.UITransitionManager.Hide();
 
@@ -36,13 +43,20 @@ public class NavigationManager {
 
     public void AutoClearingActionOnLoad(params Action[] actions) {
         foreach (Action action in actions)
-            onLoadScene += action;
+            onLoad += action;
 
-        Action onLoaded = () => {
+        Action act = () => {
             foreach (Action action in actions)
-                onLoadScene -= action;
+                onLoad -= action;
         };
 
-        onSceneLoaded += onLoaded;
+        AutoClearingActionOnLoaded(act);
+    }
+
+    public void AutoClearingActionOnLoaded(params Action[] actions) {
+        foreach (Action action in actions) {
+            onLoaded += action;
+            _toClearOnLoaded.Add(action);
+        }
     }
 }

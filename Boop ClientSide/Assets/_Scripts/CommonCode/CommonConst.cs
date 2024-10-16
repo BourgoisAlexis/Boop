@@ -16,6 +16,8 @@ public class CommonConst {
     public string userMessageAddPiece = "usermessage_addpiece";
     public string userMessageSelectPieces = "usermessage_selectpieces";
     public string userMessageSceneLoaded = "usermessage_sceneloaded";
+    public string userMessagePlayAgain = "usermessage_playagain";
+    public string userMessageQuit = "usermessage_quit";
 }
 
 public enum GameState {

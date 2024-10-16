@@ -15,7 +15,7 @@ public class Loading : MonoBehaviour {
     }
 
     private async void Anim() {
-        while (true) {
+        while (true && _icon != null) {
             _icon.transform.localEulerAngles = Vector3.zero;
             await _icon.transform.DORotate(new Vector3(0, 0, -180), AppConst.globalAnimDuration * 3).SetEase(Ease.InOutSine).AsyncWaitForCompletion();
             await Task.Delay(500);

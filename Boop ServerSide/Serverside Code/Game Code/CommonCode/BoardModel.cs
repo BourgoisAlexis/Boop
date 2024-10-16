@@ -18,6 +18,7 @@ public class BoardModel {
     //Accessors
     public int Size => _boardSize;
     public int[,] Board => _board;
+    public GameState GameState => _gameState;
     #endregion
 
 

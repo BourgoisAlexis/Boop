@@ -18,6 +18,7 @@ public class BoardModel {
     //Accessors
     public int Size => _boardSize;
     public int[,] Board => _board;
+    public GameState GameState => _gameState;
     #endregion
 
 
@@ -55,7 +56,7 @@ public class BoardModel {
         int pieceIndex = Math.Abs(pieceValue) - 1;
 
         if (_playerModels[playerIndex].pieces[pieceIndex] < 1) {
-            Utils.LogError("BoardModel", "AddPieceOnBoard", $"player {playerIndex} has no piece of type {(large ? "large" : "normal")}");
+            GlobalManager.Instance.UINotificationManager.Show($"You have no {(large ? "large" : "normal")} piece left.");
             return 0;
         }
 

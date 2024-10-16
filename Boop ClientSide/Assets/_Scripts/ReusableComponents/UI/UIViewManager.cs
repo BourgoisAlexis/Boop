@@ -5,15 +5,17 @@ public class UIViewManager : MonoBehaviour {
     #region Variables
     [SerializeField] private List<UIView> _views = new List<UIView>();
 
-    private int _currentViewIndex = -1;
+    private int _currentViewIndex;
     #endregion
 
 
-    public void Init() {
+    public void Init(params object[] parameters) {
+        _currentViewIndex = -1;
+
         for (int i = 0; i < _views.Count; i++)
             HideView(i);
 
-        ShowView(0);
+        ShowView(0, parameters);
     }
 
     public void ShowView(int index, params object[] parameters) {

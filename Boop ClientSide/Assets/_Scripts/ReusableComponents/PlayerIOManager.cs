@@ -197,6 +197,16 @@ public class PlayerIOManager {
         m.onMessage += action;
     }
 
+    public void UnhandleMessage(string id, Action<string[]> action) {
+        if (string.IsNullOrEmpty(id) || action == null) {
+            CommonUtils.ErrorOnParams("PlayerIOManager", "RemoveMessage");
+            return;
+        }
+
+        if (_handledMessageTypes.ContainsKey(id))
+            _handledMessageTypes[id].onMessage -= action;
+    }
+
 
     //Null checks
     private bool CheckClient() {

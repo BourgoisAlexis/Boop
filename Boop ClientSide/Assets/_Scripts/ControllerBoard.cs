@@ -6,6 +6,7 @@ public class ControllerBoard : SceneManager {
     #region Variables
     [SerializeField] private GameObject _prefabSquare;
     [SerializeField] private GameObject _prefabPiece;
+    [SerializeField] private UIViewGameplay _gameplayView;
 
     private BoardSquareModel[,] _squares;
     private BoardModel _model;
@@ -24,8 +25,8 @@ public class ControllerBoard : SceneManager {
         _model.Init();
         _model.onBoop += Boop;
 
+        _viewManager.Init(_model);
         GetComponent<InputManager>().Init();
-        GetComponent<UIViewBoard>().Init(_model);
 
         PlayerIOManager playerIO = GlobalManager.Instance.PlayerIOManager;
         CommonConst commonConst = GlobalManager.Instance.CommonConst;
@@ -35,6 +36,17 @@ public class ControllerBoard : SceneManager {
         playerIO.HandleMessage(commonConst.serverMessageWin, Win, 1);
 
         BoardSpawn();
+
+        GlobalManager.Instance.Loading.Load(false);
+    }
+
+    private void OnDestroy() {
+        PlayerIOManager playerIO = GlobalManager.Instance.PlayerIOManager;
+        CommonConst commonConst = GlobalManager.Instance.CommonConst;
+        playerIO.UnhandleMessage(commonConst.serverMessageAddPiece, AddPiece);
+        playerIO.UnhandleMessage(commonConst.serverMessageAlignedPieces, AlignedPieces);
+        playerIO.UnhandleMessage(commonConst.serverMessageSelectPieces, SelectPieces);
+        playerIO.UnhandleMessage(commonConst.serverMessageWin, Win);
     }
 
     private void BoardSpawn() {
@@ -62,6 +74,9 @@ public class ControllerBoard : SceneManager {
             Utils.LogError(this, "Click", "v is null");
             return;
         }
+
+        if (_model.GameState == GameState.Ended)
+            return;
 
         _squares[v.x, v.y].square.Click();
 
@@ -233,13 +248,18 @@ public class ControllerBoard : SceneManager {
         }
     }
 
-    public void NextTurn() {
+    public void NextTurn(int index) {
         _state = BoardState.Placing;
         _selectedSquare = null;
         _alignedSquares.Clear();
+        _gameplayView.SetCurrentPlayer(index);
     }
 
     public void Win(string[] infos) {
+        if (int.TryParse(infos[0], out int playerIndex) == false)
+            return;
 
+        _viewManager.ShowView(1, playerIndex);
+        Utils.Log(this, "Win");
     }
 }
