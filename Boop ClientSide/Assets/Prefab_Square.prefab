@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 7617339834573295010}
   - component: {fileID: 7571711677510683547}
   - component: {fileID: 3966575811560264049}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Visual
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -94,7 +94,7 @@ GameObject:
   - component: {fileID: 6666000322190447736}
   - component: {fileID: 5899697359131304191}
   - component: {fileID: 4342526867650735170}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Prefab_Square
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -152,4 +152,3 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _visual: {fileID: 3966575811560264049}
   _scaleValue: 1.1
-  _highlightColor: {r: 1, g: 0.7331861, b: 0.3754716, a: 1}

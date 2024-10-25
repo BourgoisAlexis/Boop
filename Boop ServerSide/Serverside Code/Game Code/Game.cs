@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using PlayerIO.GameLibrary;
 
 namespace Boop {
@@ -19,13 +20,13 @@ namespace Boop {
     public class Player : BasePlayer {
     }
 
-    [RoomType("Lobby")]
+    [RoomType("Standard")]
     public class GameCode : Game<Player> {
         #region Variables
         private CommonConst _commonConst = new CommonConst();
         private BoardModel _model;
         private Random _random = new Random();
-        private int _playerN = 2;
+        private int _numberOfPlayers;
 
         //Gameplay
         public int _currentPlayerIndex;
@@ -36,7 +37,8 @@ namespace Boop {
 
         #region Player.IO Methods
         public override void GameStarted() {
-            Utils.Log(this, $"GameStarted : Room start : {RoomId}");
+            _numberOfPlayers = int.Parse(RoomData[_commonConst.numberOfPlayerKey]);
+            Utils.Log(this, $"GameStarted : Room start : {RoomId} {_numberOfPlayers}");
         }
 
         public override void GameClosed() {
@@ -47,9 +49,19 @@ namespace Boop {
             //TODO : checker les playerJoinData pour la version du jeu
             player.Send(_commonConst.serverMessageJoin, (player.Id - 1).ToString());
 
-            if (PlayerCount == _playerN) {
-                Broadcast(_commonConst.serverMessageLoadScene, 1.ToString());
-                _messageWaiting = new MessageWaiting(_commonConst.userMessageSceneLoaded, _playerN, GameInit);
+            string[] userNames = Players.Select(x => x.ConnectUserId).ToArray();
+            StringBuilder sb = new StringBuilder();
+            foreach (string name in userNames) {
+                sb.Append(name);
+                if (name != userNames.Last())
+                    sb.Append(_commonConst.separator);
+            }
+
+            Broadcast(_commonConst.serverMessagePlayerJoinRoom, RoomId, sb.ToString());
+
+            if (PlayerCount == _numberOfPlayers) {
+                Broadcast(_commonConst.serverMessageLoadScene, "1");
+                _messageWaiting = new MessageWaiting(_commonConst.userMessageSceneLoaded, _numberOfPlayers, GameInit);
             }
         }
 
@@ -109,7 +121,7 @@ namespace Boop {
 
         private void PlayAgain() {
             Broadcast(_commonConst.serverMessageLoadScene, 1.ToString());
-            _messageWaiting = new MessageWaiting(_commonConst.userMessageSceneLoaded, _playerN, GameInit);
+            _messageWaiting = new MessageWaiting(_commonConst.userMessageSceneLoaded, _numberOfPlayers, GameInit);
         }
 
         private void GameInit() {
@@ -155,6 +167,9 @@ namespace Boop {
                         for (int j = 0; j < aligned.Count; j++)
                             infos[j] = aligned[j].ToString();
 
+                        foreach (BoopVector bv in aligned)
+                            Utils.Log("Game", "AddPiece", bv.ToString());
+
                         GetPlayerFromID((i + 1).ToString()).Send(_commonConst.serverMessageAlignedPieces, infos);
                         _messageWaiting.messageNumber++;
                     }
@@ -192,7 +207,7 @@ namespace Boop {
 
             Utils.Log(this, "Win", $"Player {playerIndex} won");
             Broadcast(_commonConst.serverMessageWin, playerIndex.ToString());
-            _messageWaiting = new MessageWaiting(_commonConst.userMessagePlayAgain, _playerN, PlayAgain);
+            _messageWaiting = new MessageWaiting(_commonConst.userMessagePlayAgain, _numberOfPlayers, PlayAgain);
         }
         #endregion
     }

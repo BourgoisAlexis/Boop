@@ -894,7 +894,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 01fa643767496b74098dc9dc894dc2a1, type: 3}
+  m_Sprite: {fileID: 21300000, guid: f132483c9931195489b0503616f8900c, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -1071,6 +1071,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1241482984}
   - component: {fileID: 1241482983}
+  - component: {fileID: 1241482986}
   - component: {fileID: 1241482985}
   m_Layer: 0
   m_Name: -GlobalManager-
@@ -1092,7 +1093,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   showLowPriorityLogs: 0
-  useLocalPlayerIO: 1
+  useLocalPlayerIO: 0
+  numberOfPlayer: 1
 --- !u!4 &1241482984
 Transform:
   m_ObjectHideFlags: 0
@@ -1124,6 +1126,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _visual: {fileID: 2003311172}
   _icon: {fileID: 557097462}
+--- !u!114 &1241482986
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1241482980}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adcfa5c8fd8a4df49a5d94ac3ec81939, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1420096989
 GameObject:
   m_ObjectHideFlags: 0
@@ -2266,7 +2280,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 01fa643767496b74098dc9dc894dc2a1, type: 3}
+  m_Sprite: {fileID: 21300000, guid: f132483c9931195489b0503616f8900c, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1

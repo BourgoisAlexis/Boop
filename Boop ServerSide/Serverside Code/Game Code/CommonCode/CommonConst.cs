@@ -1,10 +1,15 @@
 public class CommonConst {
     public string defaultRoomID = "Lobby";
+    public string gameVersionKey = "gameversion";
+    public string numberOfPlayerKey = "numberofplayer";
     public int userLimitPerRoom = 30;
+    public char separator = ';';
 
     //Server Messages
     public string serverMessageError = "servermessage_error";
     public string serverMessageJoin = "servermessage_join";
+    public string serverMessagePlayerJoinRoom = "servermessage_playerjoinroom";
+    public string serverMessagePlayerLeaveRoom = "servermessage_playerleaveroom";
     public string serverMessageLoadScene = "servermessage_loadscene";
     public string serverMessageAddPiece = "servermessage_addpiece";
     public string serverMessageAlignedPieces = "servermessage_alignedpieces";

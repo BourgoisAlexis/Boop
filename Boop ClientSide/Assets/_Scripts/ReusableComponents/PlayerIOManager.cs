@@ -71,9 +71,12 @@ public class PlayerIOManager {
 
         _client.Multiplayer.CreateRoom(
             null,
-            "Lobby",
+            "Standard",
             true,
-            null,
+            new Dictionary<string, string> {
+                { GlobalManager.Instance.CommonConst.numberOfPlayerKey, $"{GlobalManager.Instance.numberOfPlayer}" },
+                { GlobalManager.Instance.CommonConst.gameVersionKey, $"{Application.version}" }
+            },
             (string roomID) => {
                 JoinRoom(roomID, null, null);
                 onSuccess?.Invoke(roomID);
@@ -86,7 +89,7 @@ public class PlayerIOManager {
 
     public void JoinRoom(string roomID, Action onSuccess, Action onError) {
         if (string.IsNullOrEmpty(roomID)) {
-           CommonUtils.ErrorOnParams("PlayerIOManager", "Init");
+            CommonUtils.ErrorOnParams("PlayerIOManager", "Init");
             onError?.Invoke();
             return;
         }
@@ -99,7 +102,7 @@ public class PlayerIOManager {
         _client.Multiplayer.JoinRoom(
             roomID,                             //Room id. If set to null a random roomid is used
             new Dictionary<string, string> {
-                { "gameVersion", $"{Application.version}" }
+                { GlobalManager.Instance.CommonConst.gameVersionKey, $"{Application.version}" },
             },
             (Connection connection) => {
                 _connection = connection;

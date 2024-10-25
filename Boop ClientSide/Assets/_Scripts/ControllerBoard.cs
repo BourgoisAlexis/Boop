@@ -1,4 +1,5 @@
 using DG.Tweening;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,6 +7,7 @@ public class ControllerBoard : SceneManager {
     #region Variables
     [SerializeField] private GameObject _prefabSquare;
     [SerializeField] private GameObject _prefabPiece;
+    [SerializeField] private GameObject _prefabPop;
     [SerializeField] private UIViewGameplay _gameplayView;
 
     private BoardSquareModel[,] _squares;
@@ -24,9 +26,14 @@ public class ControllerBoard : SceneManager {
         _model = new BoardModel();
         _model.Init();
         _model.onBoop += Boop;
+        _model.onNoPiecesLeft += (bool large) => { GlobalManager.Instance.UINotificationManager.Show($"You have no {(large ? "large" : "normal")} piece left."); };
 
-        _viewManager.Init(_model);
+        _viewManager.Init(_model, GlobalManager.Instance.RoomModel);
         GetComponent<InputManager>().Init();
+
+        GlobalManager.Instance.PoolManager.CreatePool(AppConst.squareKey, _prefabSquare);
+        GlobalManager.Instance.PoolManager.CreatePool(AppConst.pieceKey, _prefabPiece);
+        GlobalManager.Instance.PoolManager.CreatePool(AppConst.popKey, _prefabPop);
 
         PlayerIOManager playerIO = GlobalManager.Instance.PlayerIOManager;
         CommonConst commonConst = GlobalManager.Instance.CommonConst;
@@ -56,8 +63,7 @@ public class ControllerBoard : SceneManager {
 
         for (int x = 0; x < _model.Size; x++) {
             for (int y = 0; y < _model.Size; y++) {
-                GameObject instantiated = Instantiate(_prefabSquare);
-                instantiated.transform.parent = transform;
+                GameObject instantiated = GlobalManager.Instance.PoolManager.Dequeue(AppConst.squareKey, transform);
                 instantiated.transform.position = start + new Vector3(x, 0, y);
                 BoardSquare square = instantiated.GetComponent<BoardSquare>();
                 square.Init(x, y);
@@ -143,7 +149,7 @@ public class ControllerBoard : SceneManager {
 
         foreach (BoopVector pos in _alignedSquares) {
             BoardSquareModel sm = _squares[pos.x, pos.y];
-            sm.square.SetBaseColor(Color.white);
+            sm.square.SetBaseColor(AppConst.GetColor(ColorVariant.Light, GlobalManager.Instance.playerValue));
             if (selectedSquares.Contains(pos)) {
                 sm.square.FlashColor(Color.green);
                 RemovePiece(pos);
@@ -153,6 +159,24 @@ public class ControllerBoard : SceneManager {
         _state = BoardState.Waiting;
     }
 
+
+    private void AddPiece(BoopVector v, int pieceValue) {
+        if (v == null) {
+            Utils.LogError(this, "AddPiece", "v is null");
+            return;
+        }
+
+        BoardSquareModel square = _squares[v.x, v.y];
+
+        GameObject instantiated = GlobalManager.Instance.PoolManager.Dequeue(AppConst.pieceKey, square.square.transform);
+        instantiated.transform.localPosition = Vector3.zero;
+        BoardPiece piece = instantiated.GetComponent<BoardPiece>();
+        piece.Init(pieceValue);
+
+        square.piece = piece;
+
+        _model.Simulate(v, out List<BoopVector>[] alignedPerPlayer);
+    }
 
     public void RemovePiece(BoopVector v) {
         if (v == null) {
@@ -197,24 +221,6 @@ public class ControllerBoard : SceneManager {
         }
     }
 
-    private void AddPiece(BoopVector v, int pieceValue) {
-        if (v == null) {
-            Utils.LogError(this, "AddPiece", "v is null");
-            return;
-        }
-
-        BoardSquareModel square = _squares[v.x, v.y];
-
-        GameObject instantiated = Instantiate(_prefabPiece, square.square.transform);
-        instantiated.transform.localPosition = Vector3.zero;
-        BoardPiece piece = instantiated.GetComponent<BoardPiece>();
-        piece.Init(pieceValue);
-
-        square.piece = piece;
-
-        _model.Simulate(v, out List<BoopVector>[] alignedPerPlayer);
-    }
-
 
     //From server notice
     public void AlignedPieces(string[] infos) {
@@ -242,17 +248,21 @@ public class ControllerBoard : SceneManager {
 
         foreach (BoopVector pos in selectedSquares) {
             BoardSquareModel sm = _squares[pos.x, pos.y];
-            sm.square.SetBaseColor(Color.white);
+            sm.square.SetBaseColor(AppConst.GetColor(ColorVariant.Light, GlobalManager.Instance.playerValue));
             sm.square.FlashColor(Color.green);
             RemovePiece(pos);
         }
     }
 
-    public void NextTurn(int index) {
+    public void NextTurn(int myIndex, int currentPlayerIndex) {
+        _gameplayView.SetCurrentPlayer(currentPlayerIndex);
+
+        if (myIndex != currentPlayerIndex)
+            return;
+
         _state = BoardState.Placing;
         _selectedSquare = null;
         _alignedSquares.Clear();
-        _gameplayView.SetCurrentPlayer(index);
     }
 
     public void Win(string[] infos) {

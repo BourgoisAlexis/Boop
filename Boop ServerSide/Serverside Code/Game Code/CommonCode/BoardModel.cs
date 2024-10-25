@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 public class BoardModel {
     #region Variables
     public Action<BoopVector, BoopVector> onBoop;
     public Action<List<BoopVector>, int> onWin;
+    public Action<bool> onNoPiecesLeft;
     public Action<PlayerModel[]> onPlayerModelsUpdate;
 
     private int _boardSize = 6;
@@ -19,6 +21,7 @@ public class BoardModel {
     public int Size => _boardSize;
     public int[,] Board => _board;
     public GameState GameState => _gameState;
+    public PlayerModel[] PlayerModels => _playerModels;
     #endregion
 
 
@@ -56,7 +59,7 @@ public class BoardModel {
         int pieceIndex = Math.Abs(pieceValue) - 1;
 
         if (_playerModels[playerIndex].pieces[pieceIndex] < 1) {
-            Utils.LogError("BoardModel", "AddPieceOnBoard", $"player {playerIndex} has no piece of type {(large ? "large" : "normal")}");
+            onNoPiecesLeft?.Invoke(large);
             return 0;
         }
 
@@ -138,6 +141,8 @@ public class BoardModel {
         BoopVector[] directions = GetPossibleDirections(v);
         List<BoopVector> modified = new List<BoopVector>() { v };
 
+        Utils.Log("BoardModel", "Simulate 0", CommonUtils.BoardState(_board));
+
         foreach (BoopVector direction in directions) {
             BoopVector adjacentPos = v + direction;
 
@@ -146,6 +151,8 @@ public class BoardModel {
             if (adjacentValue != 0 && Math.Abs(adjacentValue) <= Math.Abs(_board[v.x, v.y]))
                 Boop(adjacentPos, direction, ref modified);
         }
+
+        Utils.Log("BoardModel", "Simulate 1", CommonUtils.BoardState(_board));
 
         CheckForAlignment(modified, ref aligned);
 
@@ -188,15 +195,15 @@ public class BoardModel {
 
         foreach (BoopVector v in modified) {
             //Column
-            Straight(v, 0, 1, ref aligned);
+            Straight(v, 0, 1, ref aligned, true);
 
-            ////Line
+            //Line
             Straight(v, 1, 0, ref aligned);
 
-            ////Diag
+            //Diag
             Diagonal(v, 1, 1, ref aligned);
 
-            ////AntiDiag
+            //AntiDiag
             Diagonal(v, -1, 1, ref aligned);
 
             if (_gameState == GameState.Ended)
@@ -204,7 +211,7 @@ public class BoardModel {
         }
     }
 
-    private void Straight(BoopVector startingPos, int iterrateX, int iterrateY, ref List<BoopVector> aligned) {
+    private void Straight(BoopVector startingPos, int iterrateX, int iterrateY, ref List<BoopVector> aligned, bool log = false) {
         if (startingPos == null || aligned == null) {
             CommonUtils.ErrorOnParams("Boardmodel", "Straight");
             return;
@@ -219,7 +226,7 @@ public class BoardModel {
         }
 
         possiblePos = possiblePos.Distinct(new VectorComparer()).ToList();
-        EvaluateAlignment(possiblePos, ref aligned);
+        EvaluateAlignment(possiblePos, ref aligned, log);
     }
 
     private void Diagonal(BoopVector startingPos, int iterrateX, int iterrateY, ref List<BoopVector> aligned) {
@@ -252,7 +259,7 @@ public class BoardModel {
         EvaluateAlignment(possiblePos, ref aligned);
     }
 
-    private void EvaluateAlignment(List<BoopVector> positions, ref List<BoopVector> aligned) {
+    private void EvaluateAlignment(List<BoopVector> positions, ref List<BoopVector> aligned, bool log = false) {
         if (positions == null || aligned == null) {
             CommonUtils.ErrorOnParams("Boardmodel", "EvaluateAlignment");
             return;
@@ -264,20 +271,27 @@ public class BoardModel {
         foreach (BoopVector v in positions) {
             int newSign = Math.Sign(_board[v.x, v.y]);
 
-            if (newSign == 0)
+            if (newSign == 0) {
                 validPos.Clear();
-            else if (sign == 0 && newSign != 0)
+            }
+            else if (newSign != sign) {
+                validPos.Clear();
                 validPos.Add(v);
-            else if (sign != 0 && newSign == sign)
+            }
+            else if (newSign == sign) {
                 validPos.Add(v);
+            }
 
             sign = newSign;
 
             if (validPos.Count >= 3) {
                 int largePieceCount = 0;
-                foreach (BoopVector pos in validPos)
+                foreach (BoopVector pos in validPos) {
                     if (IsLargePiece(pos))
                         largePieceCount++;
+                    else
+                        largePieceCount = 0;
+                }
 
                 if (largePieceCount >= 3) {
                     onWin?.Invoke(validPos, sign);

@@ -9,8 +9,11 @@ public class UIPlayerLayout : MonoBehaviour {
     [SerializeField] UIPieceCount _largePieces;
 
     public void Init(params object[] parameters) {
-        _smallPieces.Init();
-        _largePieces.Init();
+        _tmproPlayerName.text = parameters[0] as string;
+        PlayerModel model = parameters[1] as PlayerModel;
+
+        _smallPieces.UpdateCount(model.pieces[0]);
+        _largePieces.UpdateCount(model.pieces[1]);
     }
 
     public void UpdateCount(PlayerModel model) {

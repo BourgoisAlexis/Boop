@@ -6,11 +6,12 @@ public class UIViewGameplay : UIView {
     protected override void Init(params object[] parameters) {
         base.Init(parameters);
 
-        BoardModel model = (BoardModel)parameters[0];
-        model.onPlayerModelsUpdate += UpdateCounts;
+        BoardModel boardModel = parameters[0] as BoardModel;
+        boardModel.onPlayerModelsUpdate += UpdateCounts;
+        RoomModel roomModel = parameters[1] as RoomModel;
 
-        foreach (UIPlayerLayout l in _layouts)
-            l.Init();
+        for (int i = 0; i < roomModel.usernames.Length; i++)
+            _layouts[i].Init(roomModel.usernames[i], boardModel.PlayerModels[i]);
     }
 
     private void UpdateCounts(PlayerModel[] models) {

@@ -5,30 +5,27 @@ using UnityEngine;
 
 public class BoardPiece : MonoBehaviour {
     #region Variables
-    [SerializeField] private MeshRenderer[] _visuals;
+    [SerializeField] private Transform _visual;
+    [SerializeField] private MeshRenderer[] _meshRenderers;
 
-    private Transform _activeVisual;
     private Vector3 _baseScale;
     private Vector3 _basePos;
     private Ease _ease = Ease.InExpo;
+    private float _amplitude = 1.5f;
     #endregion
 
 
     public void Init(int value) {
-        foreach (MeshRenderer m in _visuals)
-            m.gameObject.SetActive(false);
+        bool large = Math.Abs(value) > 1;
+        _baseScale = new Vector3(large ? 1 : 0.5f, 0.2f, large ? 1 : 0.5f);
+        _basePos = _visual.localPosition;
+        _visual.eulerAngles = Vector3.up * (value > 0 ? 45 : 0);
+        _visual.localScale = _baseScale;
 
-        int index = Mathf.Abs(value) - 1 + (value < 0 ? 0 : 2);
-        MeshRenderer visual = _visuals[index];
+        foreach (MeshRenderer m in _meshRenderers)
+            m.material.color = AppConst.GetColor(ColorVariant.Shade, value);
 
-        visual.gameObject.SetActive(true);
-        visual.material.color = value > 0 ? Color.blue : Color.red;
-
-        _activeVisual = visual.transform;
-        _baseScale = _activeVisual.localScale;
-        _basePos = _activeVisual.localPosition;
-
-        StartCoroutine(SpawnCorout());
+        StartCoroutine(SpawnCorout(AppConst.GetColor(ColorVariant.Default, value)));
     }
 
     public void Delete(Action onEnd) {
@@ -37,17 +34,25 @@ public class BoardPiece : MonoBehaviour {
 
 
     //Anim Coroutines
-    private IEnumerator SpawnCorout() {
-        float amplitude = 1.5f;
-        _activeVisual.localPosition = Vector3.up * (_basePos.y + amplitude);
-        _activeVisual.DOScale(_baseScale + Vector3.up * amplitude, AppConst.globalAnimDuration).SetEase(_ease);
-        yield return _activeVisual.DOLocalMoveY(_basePos.y, AppConst.globalAnimDuration).SetEase(_ease).WaitForCompletion();
-        _activeVisual.DOScale(_baseScale, AppConst.globalAnimDuration);
+    private IEnumerator SpawnCorout(Color color) {
+        _visual.localPosition = Vector3.up * (_basePos.y + _amplitude);
+        GameObject instantiated = GlobalManager.Instance.PoolManager.Dequeue(AppConst.popKey, transform);
+        instantiated.transform.position = _visual.position;
+        instantiated.GetComponent<BoardPop>().Init(color);
+
+        _visual.DOScale(_baseScale + Vector3.up * _amplitude, AppConst.globalAnimDuration).SetEase(_ease);
+        yield return _visual.DOLocalMoveY(_basePos.y, AppConst.globalAnimDuration).SetEase(_ease).WaitForCompletion();
+
+        yield return new WaitForSeconds(0.1f);
+        yield return _visual.DOScale(_baseScale, AppConst.globalAnimDuration).SetEase(_ease).WaitForCompletion();
+
+        GlobalManager.Instance.PoolManager.Enqueue(AppConst.popKey, instantiated);
     }
 
     private IEnumerator DeleteCorout(Action onEnd) {
+        yield return transform.DOScale(_amplitude, AppConst.globalAnimDuration).SetEase(_ease).WaitForCompletion();
         yield return transform.DOScale(0, AppConst.globalAnimDuration).SetEase(_ease).WaitForCompletion();
         onEnd?.Invoke();
-        Destroy(gameObject);
+        GlobalManager.Instance.PoolManager.Enqueue(AppConst.pieceKey, gameObject);
     }
 }

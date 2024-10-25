@@ -10,14 +10,17 @@ public class GlobalManager : MonoBehaviour {
     private PlayerIOManager _playerIOManager;
     private NavigationManager _navigationManager;
     private UITransitionManager _uiTransitionManager;
+    private PoolManager _poolManager;
     private SceneManager _sceneManager;
     private Loading _loading;
     private UINotificationManager _uiNotificationManager;
+    private RoomModel _roomModel;
 
     //Debug
     [Header("Debug")]
     public bool showLowPriorityLogs;
     public bool useLocalPlayerIO;
+    public int numberOfPlayer;
 
     //Gameplay
     private int _playerIndex;
@@ -32,9 +35,11 @@ public class GlobalManager : MonoBehaviour {
     public PlayerIOManager PlayerIOManager => _playerIOManager;
     public NavigationManager NavigationManager => _navigationManager;
     public UITransitionManager UITransitionManager => _uiTransitionManager;
+    public PoolManager PoolManager => _poolManager;
     public SceneManager SceneManager => _sceneManager;
     public Loading Loading => _loading;
     public UINotificationManager UINotificationManager => _uiNotificationManager;
+    public RoomModel RoomModel => _roomModel;
     #endregion
 
 
@@ -46,7 +51,6 @@ public class GlobalManager : MonoBehaviour {
         else {
             Destroy(gameObject);
         }
-
     }
 
     private void Start() {
@@ -55,19 +59,21 @@ public class GlobalManager : MonoBehaviour {
         _navigationManager = new NavigationManager();
 
         _loading = GetComponent<Loading>();
+        _poolManager = GetComponent<PoolManager>();
 
         _uiTransitionManager = FindObjectOfType<UITransitionManager>();
         _uiNotificationManager = FindObjectOfType<UINotificationManager>();
 
-        _navigationManager.onLoaded += GetSceneManager;
+        _navigationManager.onLoaded += OnSceneLoaded;
 
-        GetSceneManager();
+        OnSceneLoaded();
     }
 
 
-    private void GetSceneManager() {
+    private void OnSceneLoaded() {
         _sceneManager = FindObjectOfType<SceneManager>();
         _sceneManager?.Init();
+        Camera.main.backgroundColor = AppConst.GetColor(ColorVariant.SuperTone, playerValue);
     }
 
     public void ConnectToPlayerIO(string userID) {
@@ -82,6 +88,7 @@ public class GlobalManager : MonoBehaviour {
 
         _playerIOManager.HandleMessage(_commonConst.serverMessageError, OnlineError);
         _playerIOManager.HandleMessage(_commonConst.serverMessageJoin, Join, 1);
+        _playerIOManager.HandleMessage(_commonConst.serverMessagePlayerJoinRoom, PlayerJoinRoom, 2);
         _playerIOManager.HandleMessage(_commonConst.serverMessageLoadScene, LoadScene, 1);
 
         _playerIOManager.HandleMessage(_commonConst.serverMessageNextTurn, NextTurn, 2);
@@ -104,6 +111,13 @@ public class GlobalManager : MonoBehaviour {
             Utils.LogError(this, "Join", "can't parse infos[0]");
     }
 
+    private void PlayerJoinRoom(string[] infos) {
+        _roomModel = new RoomModel(
+            infos[0],
+            infos[1].Split(_commonConst.separator)
+        );
+    }
+
     private void NextTurn(string[] infos) {
         if (int.TryParse(infos[0], out _currentPlayerIndex) == false) {
             Utils.LogError(this, "NextTurn", "can't parse infos[0]");
@@ -116,8 +130,7 @@ public class GlobalManager : MonoBehaviour {
         if (serverBoard != localBoard)
             Utils.LogError(this, "NextTurn", "Need synchronisation");
 
-        if (_currentPlayerIndex == _playerIndex)
-            _controllerBoard.NextTurn(_currentPlayerIndex);
+        _controllerBoard.NextTurn(_playerIndex, _currentPlayerIndex);
     }
 
     private void LoadScene(string[] infos) {

@@ -8,12 +8,12 @@ public class BoardSquare : MonoBehaviour {
     #region Variables
     [SerializeField] private MeshRenderer _visual;
     [SerializeField] private float _scaleValue;
-    [SerializeField] private Color _highlightColor;
 
     private int _x;
     private int _y;
     private Vector3 _baseScale;
-    private Color _color = Color.white;
+    private Color _setColor;
+    private Color _highlightColor => AppConst.GetColor(ColorVariant.Tint, GlobalManager.Instance.playerValue);
 
     //Accessors
     public int X => _x;
@@ -26,11 +26,12 @@ public class BoardSquare : MonoBehaviour {
         _x = x;
         _y = y;
         _baseScale = _visual.transform.localScale;
+        SetBaseColor(AppConst.GetColor(ColorVariant.Light, GlobalManager.Instance.playerValue));
     }
 
 
     public void SetBaseColor(Color color) {
-        _color = color;
+        _setColor = color;
         SetColor(color);
     }
 
@@ -50,7 +51,7 @@ public class BoardSquare : MonoBehaviour {
         else
             _visual.transform.DOScale(_baseScale, AppConst.globalAnimDuration);
 
-        _visual.material.DOColor(highlight ? _highlightColor : _color, AppConst.globalAnimDuration);
+        _visual.material.DOColor(highlight ? _highlightColor : _setColor, AppConst.globalAnimDuration);
     }
 
     public void Click() {
@@ -66,7 +67,7 @@ public class BoardSquare : MonoBehaviour {
             yield break;
 
         yield return new WaitForSeconds(duration);
-        _visual.material.DOColor(_color, AppConst.globalAnimDuration);
+        _visual.material.DOColor(_setColor, AppConst.globalAnimDuration);
     }
 
     private IEnumerator ClickCorout() {

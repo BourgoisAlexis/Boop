@@ -1,5 +1,6 @@
 using PlayerIOClient;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 public static class CommonUtils {
@@ -39,6 +40,17 @@ public static class CommonUtils {
                 if (x < boardSize - 1 || y < boardSize - 1)
                     sb.Append(";");
             }
+
+        return sb.ToString();
+    }
+
+    public static string LogVectorList(List<BoopVector> list) {
+        StringBuilder sb = new StringBuilder();
+        foreach (BoopVector v in list) {
+            sb.Append(v.ToString());
+            if (v != list.Last())
+                sb.Append(" / ");
+        }
 
         return sb.ToString();
     }

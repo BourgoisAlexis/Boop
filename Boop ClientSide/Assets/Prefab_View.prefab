@@ -1338,7 +1338,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2372904376032805214}
   m_Layer: 5
-  m_Name: CreateJoin
+  m_Name: Prefab_View
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
