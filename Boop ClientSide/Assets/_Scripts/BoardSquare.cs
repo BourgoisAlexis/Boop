@@ -13,7 +13,7 @@ public class BoardSquare : MonoBehaviour {
     private int _y;
     private Vector3 _baseScale;
     private Color _setColor;
-    private Color _highlightColor => AppConst.GetColor(ColorVariant.Tint, GlobalManager.Instance.playerValue);
+    private Color _highlightColor => AppConst.GetColor(ColorVariant.Tint, GlobalManager.Instance.PlayerValue);
 
     //Accessors
     public int X => _x;
@@ -26,7 +26,7 @@ public class BoardSquare : MonoBehaviour {
         _x = x;
         _y = y;
         _baseScale = _visual.transform.localScale;
-        SetBaseColor(AppConst.GetColor(ColorVariant.Light, GlobalManager.Instance.playerValue));
+        SetBaseColor(AppConst.GetColor(ColorVariant.Light, GlobalManager.Instance.PlayerValue));
     }
 
 
@@ -35,7 +35,7 @@ public class BoardSquare : MonoBehaviour {
         SetColor(color);
     }
 
-    public void SetColor(Color color, float duration = 0) {
+    private void SetColor(Color color, float duration = 0) {
         StartCoroutine(SetColorCorout(color, duration));
     }
 

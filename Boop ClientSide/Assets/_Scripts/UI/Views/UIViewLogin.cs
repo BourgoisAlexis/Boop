@@ -10,6 +10,7 @@ public class UIViewLogin : UIView {
         base.Init(parameters);
 
         _loginButton.onClick.AddListener(Login);
+        Utils.InitializeInputField(_inputField);
     }
 
     private void Login() {

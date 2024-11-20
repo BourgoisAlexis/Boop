@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 public class BoardModel {
     #region Variables
@@ -16,12 +15,15 @@ public class BoardModel {
 
     private PlayerModel[] _playerModels;
     private GameState _gameState;
+    private int _currentPlayerIndex;
 
     //Accessors
     public int Size => _boardSize;
     public int[,] Board => _board;
     public GameState GameState => _gameState;
     public PlayerModel[] PlayerModels => _playerModels;
+    public int CurrentPlayerIndex => _currentPlayerIndex;
+    public int CurrentPlayerValue => CommonUtils.PlayerValueFromIndex(_currentPlayerIndex);
     #endregion
 
 
@@ -55,7 +57,7 @@ public class BoardModel {
 
         int pieceValue = (large ? 2 : 1) * playerValue;
 
-        int playerIndex = playerValue < 0 ? 0 : 1;
+        int playerIndex = CommonUtils.PlayerIndexFromValue(playerValue);
         int pieceIndex = Math.Abs(pieceValue) - 1;
 
         if (_playerModels[playerIndex].pieces[pieceIndex] < 1) {
@@ -82,7 +84,7 @@ public class BoardModel {
         if (pieceValue == 0)
             return;
 
-        int playerIndex = pieceValue < 0 ? 0 : 1;
+        int playerIndex = CommonUtils.PlayerIndexFromValue(pieceValue);
         int pieceIndex = Math.Abs(pieceValue) - 1;
 
         _playerModels[playerIndex].pieces[pieceIndex + (upgrade ? 1 : 0)]++;
@@ -294,7 +296,7 @@ public class BoardModel {
                 }
 
                 if (largePieceCount >= 3) {
-                    onWin?.Invoke(validPos, sign);
+                    onWin?.Invoke(validPos, CommonUtils.PlayerIndexFromValue(sign));
                     _gameState = GameState.Ended;
                     return;
                 }
@@ -352,5 +354,9 @@ public class BoardModel {
         }
 
         return Math.Abs(_board[v.x, v.y]) == 2;
+    }
+
+    public void NextTurn(int currentPlayerIndex) {
+        _currentPlayerIndex = currentPlayerIndex;
     }
 }

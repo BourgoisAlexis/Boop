@@ -63,26 +63,29 @@ public class PlayerIOManager {
     }
 
     //Room
-    public void CreateRoom(Action<string> onSuccess) {
+    public void CreateRoom(Action<string> onSuccess, Action onError) {
         Utils.Log(this, "CreateRoom");
 
         if (!CheckClient())
             return;
 
+        CommonConst cc = GlobalManager.Instance.CommonConst;
         _client.Multiplayer.CreateRoom(
             null,
             "Standard",
             true,
             new Dictionary<string, string> {
-                { GlobalManager.Instance.CommonConst.numberOfPlayerKey, $"{GlobalManager.Instance.numberOfPlayer}" },
-                { GlobalManager.Instance.CommonConst.gameVersionKey, $"{Application.version}" }
+                { cc.numberOfPlayerKey, $"{GlobalManager.Instance.numberOfPlayer}" },
+                { cc.gameVersionKey, cc.version }
             },
             (string roomID) => {
-                JoinRoom(roomID, null, null);
+                JoinRoom(roomID, null, onError);
                 onSuccess?.Invoke(roomID);
             },
             (PlayerIOError error) => {
                 Utils.LogError(this, "CreateRoom", error.Message);
+                GlobalManager.Instance.UINotificationManager.Show(error.Message);
+                onError?.Invoke();
             }
         );
     }
@@ -96,13 +99,16 @@ public class PlayerIOManager {
 
         Utils.Log(this, "JoinRoom");
 
-        if (!CheckClient())
+        if (!CheckClient()) {
+            onError?.Invoke();
             return;
+        }
 
+        CommonConst cc = GlobalManager.Instance.CommonConst;
         _client.Multiplayer.JoinRoom(
             roomID,                             //Room id. If set to null a random roomid is used
             new Dictionary<string, string> {
-                { GlobalManager.Instance.CommonConst.gameVersionKey, $"{Application.version}" },
+                { cc.gameVersionKey, cc.version }
             },
             (Connection connection) => {
                 _connection = connection;
@@ -111,6 +117,7 @@ public class PlayerIOManager {
             },
             (PlayerIOError error) => {
                 Utils.LogError(this, "JoinRoom", error.Message);
+                GlobalManager.Instance.UINotificationManager.Show(error.Message);
                 onError?.Invoke();
             }
         );

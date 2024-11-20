@@ -50,8 +50,7 @@ public class BoardPiece : MonoBehaviour {
     }
 
     private IEnumerator DeleteCorout(Action onEnd) {
-        yield return transform.DOScale(_amplitude, AppConst.globalAnimDuration).SetEase(_ease).WaitForCompletion();
-        yield return transform.DOScale(0, AppConst.globalAnimDuration).SetEase(_ease).WaitForCompletion();
+        yield return Utils.BumpAnim(transform, _amplitude, 0);
         onEnd?.Invoke();
         GlobalManager.Instance.PoolManager.Enqueue(AppConst.pieceKey, gameObject);
     }

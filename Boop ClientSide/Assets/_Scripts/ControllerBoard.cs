@@ -29,6 +29,7 @@ public class ControllerBoard : SceneManager {
         _model.onNoPiecesLeft += (bool large) => { GlobalManager.Instance.UINotificationManager.Show($"You have no {(large ? "large" : "normal")} piece left."); };
 
         _viewManager.Init(_model, GlobalManager.Instance.RoomModel);
+        _texturedCanvas.Init();
         GetComponent<InputManager>().Init();
 
         GlobalManager.Instance.PoolManager.CreatePool(AppConst.squareKey, _prefabSquare);
@@ -41,6 +42,7 @@ public class ControllerBoard : SceneManager {
         playerIO.HandleMessage(commonConst.serverMessageAlignedPieces, AlignedPieces);
         playerIO.HandleMessage(commonConst.serverMessageSelectPieces, SelectPieces, 3);
         playerIO.HandleMessage(commonConst.serverMessageWin, Win, 1);
+        playerIO.HandleMessage(commonConst.serverMessageNextTurn, NextTurn, 2);
 
         BoardSpawn();
 
@@ -54,6 +56,7 @@ public class ControllerBoard : SceneManager {
         playerIO.UnhandleMessage(commonConst.serverMessageAlignedPieces, AlignedPieces);
         playerIO.UnhandleMessage(commonConst.serverMessageSelectPieces, SelectPieces);
         playerIO.UnhandleMessage(commonConst.serverMessageWin, Win);
+        playerIO.UnhandleMessage(commonConst.serverMessageNextTurn, NextTurn);
     }
 
     private void BoardSpawn() {
@@ -100,7 +103,7 @@ public class ControllerBoard : SceneManager {
     }
 
     private void Place(BoopVector v, bool large) {
-        int pieceValue = _model.AddPieceOnBoard(v, large, GlobalManager.Instance.currentPlayerValue);
+        int pieceValue = _model.AddPieceOnBoard(v, large, Model.CurrentPlayerValue);
 
         if (pieceValue == 0)
             return;
@@ -122,6 +125,8 @@ public class ControllerBoard : SceneManager {
 
         if (_selectedSquare == null) {
             _selectedSquare = v;
+            GlobalManager.Instance.SFXManager.PlayAudio(7);
+            _squares[v.x, v.y].square.SetBaseColor(AppConst.green);
             return;
         }
 
@@ -144,17 +149,13 @@ public class ControllerBoard : SceneManager {
         }
         else {
             _selectedSquare = null;
+            GlobalManager.Instance.SFXManager.PlayAudio(6);
+            foreach (BoopVector p in _alignedSquares)
+                _squares[p.x, p.y].square.SetBaseColor(AppConst.yellow);
             return;
         }
 
-        foreach (BoopVector pos in _alignedSquares) {
-            BoardSquareModel sm = _squares[pos.x, pos.y];
-            sm.square.SetBaseColor(AppConst.GetColor(ColorVariant.Light, GlobalManager.Instance.playerValue));
-            if (selectedSquares.Contains(pos)) {
-                sm.square.FlashColor(Color.green);
-                RemovePiece(pos);
-            }
-        }
+        PiecesSelected(_alignedSquares);
 
         _state = BoardState.Waiting;
     }
@@ -172,6 +173,8 @@ public class ControllerBoard : SceneManager {
         instantiated.transform.localPosition = Vector3.zero;
         BoardPiece piece = instantiated.GetComponent<BoardPiece>();
         piece.Init(pieceValue);
+
+        GlobalManager.Instance.SFXManager.PlayAudio(Math.Abs(pieceValue) > 1 ? 4 : 11);
 
         square.piece = piece;
 
@@ -231,7 +234,7 @@ public class ControllerBoard : SceneManager {
             pos.Add(BoopVector.FromString(info));
 
         foreach (BoopVector p in pos)
-            _squares[p.x, p.y].square.SetBaseColor(Color.yellow);
+            _squares[p.x, p.y].square.SetBaseColor(AppConst.yellow);
 
         _alignedSquares = pos;
     }
@@ -245,19 +248,30 @@ public class ControllerBoard : SceneManager {
 
     public void SelectPieces(string[] infos) {
         List<BoopVector> selectedSquares = _model.EvaluateAlignmentFromTo(BoopVector.FromString(infos[0]), BoopVector.FromString(infos[2]));
+        PiecesSelected(selectedSquares);
+    }
+
+    private void PiecesSelected(List<BoopVector> selectedSquares) {
+        GlobalManager.Instance.SFXManager.PlayAudio(10);
 
         foreach (BoopVector pos in selectedSquares) {
             BoardSquareModel sm = _squares[pos.x, pos.y];
-            sm.square.SetBaseColor(AppConst.GetColor(ColorVariant.Light, GlobalManager.Instance.playerValue));
-            sm.square.FlashColor(Color.green);
+            sm.square.SetBaseColor(AppConst.GetColor(ColorVariant.Light, GlobalManager.Instance.PlayerValue));
+            sm.square.FlashColor(AppConst.green);
             RemovePiece(pos);
         }
     }
 
-    public void NextTurn(int myIndex, int currentPlayerIndex) {
-        _gameplayView.SetCurrentPlayer(currentPlayerIndex);
+    public void NextTurn(string[] infos) {
+        if (int.TryParse(infos[0], out int currentPlayerIndex) == false) {
+            Utils.LogError(this, "NextTurn", "can't parse infos[0]");
+            return;
+        }
 
-        if (myIndex != currentPlayerIndex)
+        _model.NextTurn(currentPlayerIndex);
+        _gameplayView.SetCurrentPlayer(_model.CurrentPlayerIndex);
+
+        if (GlobalManager.Instance.PlayerIndex != _model.CurrentPlayerIndex)
             return;
 
         _state = BoardState.Placing;
@@ -266,10 +280,11 @@ public class ControllerBoard : SceneManager {
     }
 
     public void Win(string[] infos) {
-        if (int.TryParse(infos[0], out int playerIndex) == false)
+        if (int.TryParse(infos[0], out int playerIndex) == false) {
+            Utils.LogError(this, "Win", "can't parse infos[0]");
             return;
+        }
 
         _viewManager.ShowView(1, playerIndex);
-        Utils.Log(this, "Win");
     }
 }

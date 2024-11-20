@@ -28,26 +28,43 @@ public class UIViewCreateJoin : UIView {
         if (_index == 0) {
             _inputField.gameObject.SetActive(true);
             _createButton.gameObject.SetActive(false);
+            _index++;
         }
         else if (_index == 1) {
             GlobalManager.Instance.Loading.Load(true);
-            Action act = () => { GlobalManager.Instance.Loading.Load(false); };
-            GlobalManager.Instance.PlayerIOManager.JoinRoom(_inputField.text, act, act);
-        }
+            Action onSuccess = () => {
+                _index++;
+                GlobalManager.Instance.Loading.Load(false);
+            };
 
-        _index++;
+            Action onError = () => {
+                Back();
+                GlobalManager.Instance.Loading.Load(false);
+            };
+
+            GlobalManager.Instance.PlayerIOManager.JoinRoom(_inputField.text, onSuccess, onError);
+        }
     }
 
     private void Create() {
         _createButton.gameObject.SetActive(false);
         _joinButton.gameObject.SetActive(false);
+        GlobalManager.Instance.Loading.Load(true);
 
-        Action<string> action = (string roomID) => {
+        Action<string> onSuccess = (string roomID) => {
             _copyButton.gameObject.SetActive(true);
             _roomID.gameObject.SetActive(true);
             _roomID.text = roomID;
+            GlobalManager.Instance.Loading.Load(false);
         };
-        GlobalManager.Instance.PlayerIOManager.CreateRoom(action);
+
+        Action onError = () => {
+            _createButton.gameObject.SetActive(true);
+            _joinButton.gameObject.SetActive(true);
+            GlobalManager.Instance.Loading.Load(false);
+        };
+
+        GlobalManager.Instance.PlayerIOManager.CreateRoom(onSuccess, onError);
 
         _index++;
     }
@@ -75,6 +92,8 @@ public class UIViewCreateJoin : UIView {
         _joinButton.gameObject.SetActive(true);
         _createButton.gameObject.SetActive(true);
         _copyButton.gameObject.SetActive(false);
+
+        Utils.InitializeInputField(_inputField);
 
         _index = 0;
     }

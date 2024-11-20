@@ -65,4 +65,7 @@ public static class CommonUtils {
 
         return result;
     }
+
+    public static int PlayerValueFromIndex(int index) => index == 0 ? -1 : 1;
+    public static int PlayerIndexFromValue(int value) => value < 0 ? 0 : 1;
 }

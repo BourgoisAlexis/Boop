@@ -29,14 +29,19 @@ namespace Boop {
         private int _numberOfPlayers;
 
         //Gameplay
-        public int _currentPlayerIndex;
         public MessageWaiting _messageWaiting;
-        public int _currentPlayerValue => _currentPlayerIndex == 0 ? -1 : 1;
         #endregion
 
 
         #region Player.IO Methods
         public override void GameStarted() {
+            if (RoomData[_commonConst.gameVersionKey] != _commonConst.version) {
+                foreach (Player p in Players)
+                    p.Disconnect();
+
+                return;
+            }
+
             _numberOfPlayers = int.Parse(RoomData[_commonConst.numberOfPlayerKey]);
             Utils.Log(this, $"GameStarted : Room start : {RoomId} {_numberOfPlayers}");
         }
@@ -46,6 +51,12 @@ namespace Boop {
         }
 
         public override void UserJoined(Player player) {
+            if (player.JoinData[_commonConst.gameVersionKey] != _commonConst.version) {
+                player.Send(_commonConst.serverMessageError, "Wrong version of the game");
+                player.Disconnect();
+                return;
+            }
+
             //TODO : checker les playerJoinData pour la version du jeu
             player.Send(_commonConst.serverMessageJoin, (player.Id - 1).ToString());
 
@@ -97,6 +108,7 @@ namespace Boop {
         #endregion
 
         #region Custom Methods
+        //Send message to every players except the one mentioned
         private void SpreadMessage(string messageType, Player sender, Message originalMessage) {
             List<object> args = new List<object>();
 
@@ -132,7 +144,7 @@ namespace Boop {
 
             _model.Init();
 
-            _currentPlayerIndex = _random.NextDouble() > 0.5f ? 0 : 1;
+            _model.NextTurn(_random.NextDouble() > 0.5f ? 0 : 1);
             NextTurn();
         }
 
@@ -140,7 +152,7 @@ namespace Boop {
             BoopVector v = BoopVector.FromString(m.GetString(0));
             int pieceValue = m.GetInt(1);
             bool large = Math.Abs(pieceValue) == 2;
-            int actualValue = _model.AddPieceOnBoard(v, large, _currentPlayerValue);
+            int actualValue = _model.AddPieceOnBoard(v, large, _model.CurrentPlayerValue);
 
             if (actualValue != pieceValue) {
                 Utils.LogError(this, "AddPiece", "received value is different from value");
@@ -192,11 +204,13 @@ namespace Boop {
             if (_model.GameState == GameState.Ended)
                 return;
 
-            _currentPlayerIndex++;
-            if (_currentPlayerIndex > Players.Count() - 1)
-                _currentPlayerIndex = 0;
+            int value = _model.CurrentPlayerIndex + 1;
+            if (value > Players.Count() - 1)
+                value = 0;
 
-            Broadcast(_commonConst.serverMessageNextTurn, _currentPlayerIndex.ToString(), CommonUtils.BoardState(_model.Board));
+            _model.NextTurn(value);
+
+            Broadcast(_commonConst.serverMessageNextTurn, _model.CurrentPlayerIndex.ToString(), CommonUtils.BoardState(_model.Board));
         }
 
         private void Win(List<BoopVector> aligned, int playerIndex) {

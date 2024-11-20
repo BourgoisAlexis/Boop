@@ -19,17 +19,18 @@ public class UINotificationManager : MonoBehaviour {
     }
 
 
-    public async void Show(string content) {
+    public async void Show(string content, int duration = 3000) {
         if (string.IsNullOrEmpty(content)) {
             CommonUtils.ErrorOnParams("UINotificationManager", "Show");
             return;
         }
 
         _tmproContent.text = content;
+        //GlobalManager.Instance.SFXManager.PlayAudio(12);
 
         _frame.DOAnchorMin(new Vector2(_anchors.x, _anchors.y), AppConst.globalAnimDuration);
         _frame.DOAnchorMax(new Vector2(_anchors.z, _anchors.w), AppConst.globalAnimDuration);
-        await Task.Delay(3000);
+        await Task.Delay(duration);
         Hide();
     }
 

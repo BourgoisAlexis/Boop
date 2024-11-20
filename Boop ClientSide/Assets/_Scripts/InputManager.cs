@@ -15,7 +15,7 @@ public class InputManager : MonoBehaviour {
 
     private void Update() {
         if (_camera == null) {
-            Utils.LogError(this, "Update", "_camera is null");
+            Utils.Log(this, "Update", "_camera is null");
             return;
         }
 

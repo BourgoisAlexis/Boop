@@ -15,6 +15,8 @@ public static class AppConst {
     public static string pieceKey = "Boardpiece";
     public static string popKey = "VFXPop";
     public const float globalAnimDuration = 0.12f;
+    public static Color yellow { get { ColorUtility.TryParseHtmlString("#FDEE78", out Color result); return result; } }
+    public static Color green { get { ColorUtility.TryParseHtmlString("#78FDA7", out Color result); return result; } }
 
     public static Color GetColor(ColorVariant variant, int value = -1) {
         Color result = default(Color);

@@ -50,6 +50,7 @@ public class UIButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     }
 
     public void OnPointerClick(PointerEventData eventData) {
+        GlobalManager.Instance.SFXManager.PlayAudio(19);
         onClick?.Invoke();
     }
 }

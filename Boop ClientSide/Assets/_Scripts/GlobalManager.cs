@@ -1,9 +1,8 @@
-using System.Linq;
 using System.Text;
 using UnityEngine;
 
 public class GlobalManager : MonoBehaviour {
-    public static GlobalManager Instance;
+    public static GlobalManager Instance { get; private set; }
 
     #region Variables
     private CommonConst _commonConst;
@@ -11,6 +10,7 @@ public class GlobalManager : MonoBehaviour {
     private NavigationManager _navigationManager;
     private UITransitionManager _uiTransitionManager;
     private PoolManager _poolManager;
+    private SFXManager _sfxManager;
     private SceneManager _sceneManager;
     private Loading _loading;
     private UINotificationManager _uiNotificationManager;
@@ -24,10 +24,9 @@ public class GlobalManager : MonoBehaviour {
 
     //Gameplay
     private int _playerIndex;
-    private int _currentPlayerIndex;
 
-    public int playerValue => _playerIndex == 0 ? -1 : 1;
-    public int currentPlayerValue => _currentPlayerIndex == 0 ? -1 : 1;
+    public int PlayerIndex => _playerIndex;
+    public int PlayerValue => CommonUtils.PlayerValueFromIndex(_playerIndex);
     private ControllerBoard _controllerBoard => _sceneManager as ControllerBoard;
 
     //Accessors
@@ -36,6 +35,7 @@ public class GlobalManager : MonoBehaviour {
     public NavigationManager NavigationManager => _navigationManager;
     public UITransitionManager UITransitionManager => _uiTransitionManager;
     public PoolManager PoolManager => _poolManager;
+    public SFXManager SFXManager => _sfxManager;
     public SceneManager SceneManager => _sceneManager;
     public Loading Loading => _loading;
     public UINotificationManager UINotificationManager => _uiNotificationManager;
@@ -60,6 +60,7 @@ public class GlobalManager : MonoBehaviour {
 
         _loading = GetComponent<Loading>();
         _poolManager = GetComponent<PoolManager>();
+        _sfxManager = GetComponent<SFXManager>();
 
         _uiTransitionManager = FindObjectOfType<UITransitionManager>();
         _uiNotificationManager = FindObjectOfType<UINotificationManager>();
@@ -73,7 +74,7 @@ public class GlobalManager : MonoBehaviour {
     private void OnSceneLoaded() {
         _sceneManager = FindObjectOfType<SceneManager>();
         _sceneManager?.Init();
-        Camera.main.backgroundColor = AppConst.GetColor(ColorVariant.SuperTone, playerValue);
+        _sfxManager?.Init();
     }
 
     public void ConnectToPlayerIO(string userID) {
@@ -103,6 +104,7 @@ public class GlobalManager : MonoBehaviour {
         foreach (string info in infos)
             sb.AppendLine(info);
 
+        _uiNotificationManager.Show(sb.ToString());
         Utils.LogError(this, "OnlineError", sb.ToString());
     }
 
@@ -119,7 +121,7 @@ public class GlobalManager : MonoBehaviour {
     }
 
     private void NextTurn(string[] infos) {
-        if (int.TryParse(infos[0], out _currentPlayerIndex) == false) {
+        if (int.TryParse(infos[0], out int currentPlayerIndex) == false) {
             Utils.LogError(this, "NextTurn", "can't parse infos[0]");
             return;
         }
@@ -129,8 +131,6 @@ public class GlobalManager : MonoBehaviour {
 
         if (serverBoard != localBoard)
             Utils.LogError(this, "NextTurn", "Need synchronisation");
-
-        _controllerBoard.NextTurn(_playerIndex, _currentPlayerIndex);
     }
 
     private void LoadScene(string[] infos) {
