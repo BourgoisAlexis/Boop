@@ -93,8 +93,6 @@ public class UIViewCreateJoin : UIView {
         _createButton.gameObject.SetActive(true);
         _copyButton.gameObject.SetActive(false);
 
-        Utils.InitializeInputField(_inputField);
-
         _index = 0;
     }
 }

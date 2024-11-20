@@ -26,7 +26,6 @@ public class UINotificationManager : MonoBehaviour {
         }
 
         _tmproContent.text = content;
-        //GlobalManager.Instance.SFXManager.PlayAudio(12);
 
         _frame.DOAnchorMin(new Vector2(_anchors.x, _anchors.y), AppConst.globalAnimDuration);
         _frame.DOAnchorMax(new Vector2(_anchors.z, _anchors.w), AppConst.globalAnimDuration);

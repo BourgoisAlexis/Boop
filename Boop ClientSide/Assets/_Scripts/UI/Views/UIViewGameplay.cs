@@ -1,10 +1,13 @@
 using UnityEngine;
 
 public class UIViewGameplay : UIView {
+    [SerializeField] private UIRules _rules;
     [SerializeField] private UIPlayerLayout[] _layouts;
 
     protected override void Init(params object[] parameters) {
         base.Init(parameters);
+
+        _rules.Init();
 
         BoardModel boardModel = parameters[0] as BoardModel;
         boardModel.onPlayerModelsUpdate += UpdateCounts;
