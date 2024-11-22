@@ -77,7 +77,7 @@ namespace Boop {
         }
 
         public override void UserLeft(Player player) {
-
+            Broadcast(_commonConst.serverMessagePlayerLeaveRoom);
         }
 
         // This method is called when a player sends a message into the server code
@@ -129,6 +129,19 @@ namespace Boop {
                     return p;
 
             return null;
+        }
+
+        private int GetPlayerIndex(Player player) {
+            int index = 0;
+
+            foreach (Player p in Players) {
+                if (p.Id == player.Id)
+                    break;
+
+                index++;
+            }
+
+            return index;
         }
 
         private void PlayAgain() {

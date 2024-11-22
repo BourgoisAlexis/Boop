@@ -1,6 +1,7 @@
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class ControllerBoard : SceneManager {
@@ -26,7 +27,7 @@ public class ControllerBoard : SceneManager {
         _model = new BoardModel();
         _model.Init();
         _model.onBoop += Boop;
-        _model.onNoPiecesLeft += (bool large) => { GlobalManager.Instance.UINotificationManager.Show($"You have no {(large ? "large" : "normal")} piece left."); };
+        _model.onNoPiecesLeft += (bool large) => { GlobalManager.Instance.UINotificationManager.Show($"You have no {(large ? "large" : "small")} piece left"); };
 
         _viewManager.Init(_model, GlobalManager.Instance.RoomModel);
         _texturedCanvas.Init();
@@ -43,6 +44,7 @@ public class ControllerBoard : SceneManager {
         playerIO.HandleMessage(commonConst.serverMessageSelectPieces, SelectPieces, 3);
         playerIO.HandleMessage(commonConst.serverMessageWin, Win, 1);
         playerIO.HandleMessage(commonConst.serverMessageNextTurn, NextTurn, 2);
+        playerIO.HandleMessage(commonConst.serverMessagePlayerLeaveRoom, PlayerLeft);
 
         BoardSpawn();
 
@@ -57,6 +59,7 @@ public class ControllerBoard : SceneManager {
         playerIO.UnhandleMessage(commonConst.serverMessageSelectPieces, SelectPieces);
         playerIO.UnhandleMessage(commonConst.serverMessageWin, Win);
         playerIO.UnhandleMessage(commonConst.serverMessageNextTurn, NextTurn);
+        playerIO.UnhandleMessage(commonConst.serverMessagePlayerLeaveRoom, PlayerLeft);
     }
 
     private void BoardSpawn() {
@@ -227,6 +230,8 @@ public class ControllerBoard : SceneManager {
 
     //From server notice
     public void AlignedPieces(string[] infos) {
+        GlobalManager.Instance.UINotificationManager.Show("Select the pieces to remove");
+
         _state = BoardState.Selecting;
 
         List<BoopVector> pos = new List<BoopVector>();
@@ -262,7 +267,7 @@ public class ControllerBoard : SceneManager {
         }
     }
 
-    public void NextTurn(string[] infos) {
+    private void NextTurn(string[] infos) {
         if (int.TryParse(infos[0], out int currentPlayerIndex) == false) {
             Utils.LogError(this, "NextTurn", "can't parse infos[0]");
             return;
@@ -279,12 +284,23 @@ public class ControllerBoard : SceneManager {
         _alignedSquares.Clear();
     }
 
-    public void Win(string[] infos) {
+    private void Win(string[] infos) {
         if (int.TryParse(infos[0], out int playerIndex) == false) {
             Utils.LogError(this, "Win", "can't parse infos[0]");
             return;
         }
 
-        _viewManager.ShowView(1, playerIndex);
+        _viewManager.ShowView(1, playerIndex, infos.Length > 1);
+    }
+
+    private void PlayerLeft(string[] infos) {
+        GlobalManager.Instance.UINotificationManager.Show("Your opponent left");
+
+        string[] parameters = {
+            GlobalManager.Instance.PlayerIndex.ToString(),
+            GlobalManager.Instance.CommonConst.serverMessagePlayerLeaveRoom
+        };
+
+        Win(parameters);
     }
 }

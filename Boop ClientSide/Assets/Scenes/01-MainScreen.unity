@@ -1335,7 +1335,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   showLowPriorityLogs: 0
   useLocalPlayerIO: 0
-  numberOfPlayer: 1
+  numberOfPlayer: 2
 --- !u!4 &1241482984
 Transform:
   m_ObjectHideFlags: 0

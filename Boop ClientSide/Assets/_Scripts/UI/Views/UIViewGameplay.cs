@@ -1,7 +1,9 @@
+using DG.Tweening;
 using UnityEngine;
 
 public class UIViewGameplay : UIView {
     [SerializeField] private UIRules _rules;
+    [SerializeField] private RectTransform _turnIndicator;
     [SerializeField] private UIPlayerLayout[] _layouts;
 
     protected override void Init(params object[] parameters) {
@@ -23,8 +25,8 @@ public class UIViewGameplay : UIView {
     }
 
     public void SetCurrentPlayer(int index) {
-        string message = $"{(index == GlobalManager.Instance.PlayerIndex ? "your" : "opponent")} turn";
-        GlobalManager.Instance.UINotificationManager.Show(message, 1000);
+        Vector3 rotation = new Vector3(0, 0, index * 45);
+        _turnIndicator.DORotate(rotation, AppConst.globalAnimDuration).SetEase(Ease.InExpo);
 
         for (int i = 0; i < _layouts.Length; i++)
             _layouts[i].ShowIndicator(i == index);

@@ -1,7 +1,6 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
-using DG.Tweening;
 
 public class UIViewGameEnd : UIView {
     [SerializeField] private TextMeshProUGUI _tmproText;
@@ -19,7 +18,7 @@ public class UIViewGameEnd : UIView {
         _tmproText.maxVisibleCharacters = 0;
         _tmproText.text = $"{(playerIndex == GlobalManager.Instance.PlayerIndex ? "Victory !" : "Defeat...")}";
 
-        StartCoroutine(AnimCorout());
+        StartCoroutine(AnimCorout(parameters.Length > 1));
     }
 
     protected override void Init(params object[] parameters) {
@@ -38,7 +37,7 @@ public class UIViewGameEnd : UIView {
         });
     }
 
-    private IEnumerator AnimCorout() {
+    private IEnumerator AnimCorout(bool playerleft = false) {
         GlobalManager.Instance.SFXManager.PlayAudio(14);
 
         for (int i = 0; i <= _tmproText.text.Length; i++) {
@@ -48,8 +47,10 @@ public class UIViewGameEnd : UIView {
 
         yield return new WaitForSeconds(1);
 
-        yield return SoundAndDelayCorout();
-        _playAgainButton.gameObject.SetActive(true);
+        if (!playerleft) {
+            yield return SoundAndDelayCorout();
+            _playAgainButton.gameObject.SetActive(true);
+        }
 
         yield return SoundAndDelayCorout();
         _quitButton.gameObject.SetActive(true);

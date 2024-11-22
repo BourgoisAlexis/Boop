@@ -71,7 +71,7 @@ public class UIViewCreateJoin : UIView {
 
     public void Copy() {
         GUIUtility.systemCopyBuffer = _roomID.text;
-        GlobalManager.Instance.UINotificationManager.Show("Room ID copied in clipboard.");
+        GlobalManager.Instance.UINotificationManager.Show("Room ID copied in clipboard");
     }
 
     public override void Back() {

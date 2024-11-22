@@ -18,8 +18,8 @@ public class UIPlayerLayout : MonoBehaviour {
         _tmproPlayerName.text = parameters[0] as string;
         int index = (int)parameters[1];
         _turnIndicator.transform.eulerAngles = new Vector3(0, 0, index * 45);
-        _colorTint = AppConst.GetColor(ColorVariant.Tint, index > 0 ? 1 : -1);
-        _colorLight = AppConst.GetColor(ColorVariant.Light, index > 0 ? 1 : -1);
+        _colorTint = AppConst.GetColor(ColorVariant.Tint, CommonUtils.PlayerValueFromIndex(index));
+        _colorLight = AppConst.GetColor(ColorVariant.Light, CommonUtils.PlayerValueFromIndex(index));
         PlayerModel model = parameters[2] as PlayerModel;
 
         _smallPieces.UpdateCount(model.pieces[0]);
@@ -36,7 +36,7 @@ public class UIPlayerLayout : MonoBehaviour {
     }
 
     private IEnumerator IndicatorAnimCoroutine(bool show) {
-        yield return Utils.BumpAnim(_turnIndicator.transform, 1.2f, show ? 1 : 0.8f);
+        yield return Utils.BumpAnim(_turnIndicator.transform, 1.5f, show ? 1.2f : 0.8f);
         _turnIndicator.color = show ? _colorTint : _colorLight;
     }
 }
