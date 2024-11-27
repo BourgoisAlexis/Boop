@@ -70,6 +70,20 @@ public class BoardModel {
 
         onPlayerModelsUpdate?.Invoke(_playerModels);
 
+        if (_playerModels[playerIndex].pieces[1] == 0) {
+            if (GetLargePiecesOnBoardForPlayer(playerValue) == _maxPieceNumber) {
+                List<BoopVector> pos = new List<BoopVector>() {
+                    new BoopVector(v.x, v.y),
+                    new BoopVector(v.x, v.y),
+                    new BoopVector(v.x, v.y)
+                };
+
+                onWin?.Invoke(pos, playerIndex);
+                _gameState = GameState.Ended;
+                return pieceValue;
+            }
+        }
+
         return pieceValue;
     }
 
@@ -345,6 +359,21 @@ public class BoardModel {
             RemovePieceFromBoard(v, !IsLargePiece(v));
 
         return selectedSquares;
+    }
+
+    public int GetLargePiecesOnBoardForPlayer(int playerValue) {
+        int result = 0;
+
+        for (int x = 0; x < _board.GetLength(0); x++) {
+            for (int y = 0; y < _board.GetLength(1); y++) {
+                int value = _board[x, y];
+
+                if (Math.Abs(value) == 2 && Math.Sign(value) == playerValue)
+                    result++;
+            }
+        }
+
+        return result;
     }
 
     public bool IsLargePiece(BoopVector v) {

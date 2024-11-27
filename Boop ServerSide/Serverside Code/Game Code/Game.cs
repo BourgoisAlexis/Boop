@@ -80,6 +80,10 @@ namespace Boop {
             Broadcast(_commonConst.serverMessagePlayerLeaveRoom);
         }
 
+        public override bool AllowUserJoin(Player player) {
+            return PlayerCount < _numberOfPlayers;
+        }
+
         // This method is called when a player sends a message into the server code
         public override void GotMessage(Player player, Message m) {
             CommonUtils.LogMessage(m);

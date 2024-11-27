@@ -1705,7 +1705,7 @@ MonoBehaviour:
   _nextButton: {fileID: 1121179806}
   _previousButton: {fileID: 2134786118}
   _rules:
-  - 'The game is a 2 players game
+  - 'Boop ! is a 2 players game
 
 
 
@@ -1713,38 +1713,45 @@ MonoBehaviour:
 
 
 
-    The
-    goal for each player is to align 3 big pieces on the board
+    You
+    can win by either :
 
 
 
-    3 pieces can
-    be aligned either verticaly, horizontaly or diagonaly
+    - aligning 3 big pieces
+
+    - placing all 8 big pieces
+    on the board'
+  - '3 pieces can be aligned either verticaly, horizontaly or diagonaly
 
 
 
-    Aligning 3 pieces
-    remove them from the board and either :
+    Aligning
+    3 pieces remove them from the board and either :
 
-    - upgrade the piece to big if it
-    is a small one
 
-    - or just remove the piece from the board if it is already
-    a big one'
+
+    - upgrade the piece to
+    big if it is a small one
+
+    - simply remove the piece from the board if it
+    is already a big one'
   - 'Players play one after the other
 
 
 
     During your turn you can either :
 
+
+
     -
     left click to place a small piece on the board
 
-    - or right click to place
-    a big piece if you have some'
+    - right click to place a
+    big piece if you have some'
   - "When you place a piece on the board, every adjacent pieces are pushed away (or
-    \u201CBooped\u201D)\r\n\r\nThere is 2 exceptions :\r\n- a piece can\u2019t be
-    booped if another piece is already placed on the tile where it should be booped\r\n-
+    \u201CBooped\u201D)\r\n\r\nThere is 2 exceptions :\r\n\r\n- a piece can\u2019t
+    be booped if another piece is already placed on the tile where it should be booped\r\n-
     a small piece can\u2019t boop a big piece (but a big piece can boop another big
     piece)"
 --- !u!1 &1466948219

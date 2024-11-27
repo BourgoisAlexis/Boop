@@ -11,6 +11,7 @@ public class BoardSquare : MonoBehaviour {
 
     private int _x;
     private int _y;
+    private Vector3 _basePos;
     private Vector3 _baseScale;
     private Color _setColor;
     private Color _highlightColor => AppConst.GetColor(ColorVariant.Tint, GlobalManager.Instance.PlayerValue);
@@ -25,6 +26,7 @@ public class BoardSquare : MonoBehaviour {
     public void Init(int x, int y) {
         _x = x;
         _y = y;
+        _basePos = _visual.transform.localPosition;
         _baseScale = _visual.transform.localScale;
         SetBaseColor(AppConst.GetColor(ColorVariant.Light, GlobalManager.Instance.PlayerValue));
     }
@@ -58,6 +60,10 @@ public class BoardSquare : MonoBehaviour {
         StartCoroutine(ClickCorout());
     }
 
+    public void Bump() {
+        StartCoroutine(BumpCorout());
+    }
+
 
     //Anim Coroutines
     private IEnumerator SetColorCorout(Color color, float duration = 0) {
@@ -74,5 +80,10 @@ public class BoardSquare : MonoBehaviour {
         float diff = Math.Abs(1 - _scaleValue) + 0.2f;
         yield return _visual.transform.DOScale(new Vector3(1 - diff, _baseScale.y, 1 - diff), AppConst.globalAnimDuration).WaitForCompletion();
         _visual.transform.DOScale(_baseScale, AppConst.globalAnimDuration);
+    }
+
+    private IEnumerator BumpCorout() {
+        yield return _visual.transform.DOLocalMoveY(-0.5f, AppConst.globalAnimDuration).WaitForCompletion();
+        _visual.transform.DOLocalMoveY(0, AppConst.globalAnimDuration).WaitForCompletion();
     }
 }

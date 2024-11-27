@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -15,7 +14,7 @@ public class UIRules : MonoBehaviour {
     [SerializeField] private UIButton _nextButton;
     [SerializeField] private UIButton _previousButton;
 
-    [Multiline(5)]
+    [Multiline(10)]
     [SerializeField] private List<string> _rules = new List<string>();
 
     private int _currentIndex;

@@ -1,7 +1,7 @@
 using DG.Tweening;
+using PlayerIOClient;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class ControllerBoard : SceneManager {
@@ -17,6 +17,7 @@ public class ControllerBoard : SceneManager {
     private BoardState _state = BoardState.Default;
     private BoopVector _selectedSquare = null;
     private List<BoopVector> _alignedSquares = new List<BoopVector>();
+    private bool _hasAlreadySelectedLine = false;
 
     //Accessors
     public BoardModel Model => _model;
@@ -27,7 +28,7 @@ public class ControllerBoard : SceneManager {
         _model = new BoardModel();
         _model.Init();
         _model.onBoop += Boop;
-        _model.onNoPiecesLeft += (bool large) => { GlobalManager.Instance.UINotificationManager.Show($"You have no {(large ? "large" : "small")} piece left"); };
+        _model.onNoPiecesLeft += (bool large) => { GlobalManager.Instance.UINotificationManager.Show($"You have no {(large ? "large" : "small")} pieces left"); };
 
         _viewManager.Init(_model, GlobalManager.Instance.RoomModel);
         _texturedCanvas.Init();
@@ -49,6 +50,7 @@ public class ControllerBoard : SceneManager {
         BoardSpawn();
 
         GlobalManager.Instance.Loading.Load(false);
+        _hasAlreadySelectedLine = false;
     }
 
     private void OnDestroy() {
@@ -130,6 +132,8 @@ public class ControllerBoard : SceneManager {
             _selectedSquare = v;
             GlobalManager.Instance.SFXManager.PlayAudio(7);
             _squares[v.x, v.y].square.SetBaseColor(AppConst.green);
+            if (!_hasAlreadySelectedLine)
+                GlobalManager.Instance.UINotificationManager.Show("Select the ending tile of the line");
             return;
         }
 
@@ -155,12 +159,18 @@ public class ControllerBoard : SceneManager {
             GlobalManager.Instance.SFXManager.PlayAudio(6);
             foreach (BoopVector p in _alignedSquares)
                 _squares[p.x, p.y].square.SetBaseColor(AppConst.yellow);
+            if (!_hasAlreadySelectedLine)
+                GlobalManager.Instance.UINotificationManager.Show("Select the starting tile of the line");
             return;
         }
 
-        PiecesSelected(_alignedSquares);
+        PiecesSelected(selectedSquares);
+
+        foreach (BoopVector p in _alignedSquares.FindAll(x => selectedSquares.Contains(x) == false))
+            _squares[p.x, p.y].square.SetBaseColor(AppConst.GetColor(ColorVariant.Light, GlobalManager.Instance.PlayerValue));
 
         _state = BoardState.Waiting;
+        _hasAlreadySelectedLine = true;
     }
 
 
@@ -176,6 +186,7 @@ public class ControllerBoard : SceneManager {
         instantiated.transform.localPosition = Vector3.zero;
         BoardPiece piece = instantiated.GetComponent<BoardPiece>();
         piece.Init(pieceValue);
+        square.square.Bump();
 
         GlobalManager.Instance.SFXManager.PlayAudio(Math.Abs(pieceValue) > 1 ? 4 : 11);
 
@@ -230,7 +241,8 @@ public class ControllerBoard : SceneManager {
 
     //From server notice
     public void AlignedPieces(string[] infos) {
-        GlobalManager.Instance.UINotificationManager.Show("Select the pieces to remove");
+        if (!_hasAlreadySelectedLine)
+            GlobalManager.Instance.UINotificationManager.Show("Select the starting tile of the line");
 
         _state = BoardState.Selecting;
 
@@ -289,6 +301,9 @@ public class ControllerBoard : SceneManager {
             Utils.LogError(this, "Win", "can't parse infos[0]");
             return;
         }
+
+        GlobalManager gm = GlobalManager.Instance;
+        gm.PlayerIOManager.UnhandleMessage(gm.CommonConst.serverMessagePlayerLeaveRoom, PlayerLeft);
 
         _viewManager.ShowView(1, playerIndex, infos.Length > 1);
     }

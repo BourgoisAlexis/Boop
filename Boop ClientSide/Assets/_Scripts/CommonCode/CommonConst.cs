@@ -2,7 +2,7 @@ public class CommonConst {
     public string defaultRoomID = "Lobby";
     public string gameVersionKey = "gameversion";
     public string numberOfPlayerKey = "numberofplayer";
-    public string version = "0.1";
+    public string version = "0.2";
     public int userLimitPerRoom = 30;
     public char separator = ';';
 

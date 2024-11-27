@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -18,23 +19,30 @@ public class UIViewGameEnd : UIView {
         _tmproText.maxVisibleCharacters = 0;
         _tmproText.text = $"{(playerIndex == GlobalManager.Instance.PlayerIndex ? "Victory !" : "Defeat...")}";
 
-        StartCoroutine(AnimCorout(parameters.Length > 1));
+        StartCoroutine(AnimCorout((bool)parameters[1]));
     }
 
     protected override void Init(params object[] parameters) {
         base.Init(parameters);
 
+        _playAgainButton.onClick.AddListener(Replay);
+        _quitButton.onClick.AddListener(() => Quit(null));
+    }
+
+    private void Quit(string[] infos) {
         GlobalManager gm = GlobalManager.Instance;
-        _playAgainButton.onClick.AddListener(() => {
-            gm.PlayerIOManager.SendMessage(gm.CommonConst.userMessagePlayAgain);
-            GlobalManager.Instance.Loading.Load(true);
-            GlobalManager.Instance.UINotificationManager.Show("Waiting for your opponent...");
-        });
-        _quitButton.onClick.AddListener(() => {
-            gm.PlayerIOManager.SendMessage(gm.CommonConst.userMessageQuit);
-            gm.NavigationManager.AutoClearingActionOnLoaded(() => { gm.PlayerIOManager.LeaveRoom(); });
-            gm.NavigationManager.LoadScene(0);
-        });
+        gm.PlayerIOManager.UnhandleMessage(gm.CommonConst.serverMessagePlayerLeaveRoom, Quit);
+        gm.PlayerIOManager.SendMessage(gm.CommonConst.userMessageQuit);
+        gm.NavigationManager.AutoClearingActionOnLoaded(() => { gm.PlayerIOManager.LeaveRoom(); });
+        gm.NavigationManager.LoadScene(0);
+    }
+
+    private void Replay() {
+        GlobalManager gm = GlobalManager.Instance;
+        gm.PlayerIOManager.SendMessage(gm.CommonConst.userMessagePlayAgain);
+        gm.Loading.Load(true);
+        gm.UINotificationManager.Show("Waiting for your opponent...");
+        gm.PlayerIOManager.HandleMessage(gm.CommonConst.serverMessagePlayerLeaveRoom, Quit);
     }
 
     private IEnumerator AnimCorout(bool playerleft = false) {
