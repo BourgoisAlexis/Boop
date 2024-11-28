@@ -1,0 +1,41 @@
+### Basics
+
+---
+
+Boop ! is a 2 players game.
+
+Each player starts with 8 small pieces.
+
+You can win by either:
+
+- aligning 3 big pieces,
+- or placing all 8 big pieces on the board.
+
+3 pieces can be aligned either verticaly, horizontaly or diagonaly.
+
+Aligning 3 pieces remove them from the board and either:
+
+- upgrade the piece to big if it is small,
+- or simply remove the piece from the board if it is already a big one.
+
+### Turn
+
+---
+
+Players play one after the other.
+
+During your turn you can either:
+
+- left click to place a small piece on the board,
+- or right click to place a big piece if you have some.
+
+### Boop
+
+---
+
+When you place a piece on the board, every adjacent pieces are pushed away (or “Booped”).
+
+There are 2 exceptions:
+
+- a piece can’t be booped if another piece is already placed on the tile where it should be booped,
+- a small piece can’t boop a big piece (but a big piece can boop another big piece)
